@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Patch Tool — Signal-Layer &amp; Verbindungen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #17181b;
+    --panel: #1e2024;
+    --panel-border: #2d3035;
+    --panel-border-strong: #3a3e45;
+    --text: #e9e7e1;
+    --text-dim: #8b8d93;
+    --text-faint: #55585f;
+    --rail: #0f1012;
+    --danger: #e0594f;
+    --ok: #6fcf97;
+
+    --audio: #e0a83e;
+    --pitch: #4f9fe0;
+    --gate: #e0594f;
+    --clock: #6fcf97;
+    --mod: #b385e0;
+
+    --radius: 3px;
+    --font-ui: 'Inter', system-ui, sans-serif;
+    --font-panel: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui);
+    padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 100vh; -webkit-user-select: none; user-select: none;
+  }
+  header {
+    padding: 16px clamp(12px, 3vw, 32px) 12px; border-bottom: 1px solid var(--panel-border);
+    display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between;
+  }
+  header h1 { margin: 0; font-size: 16px; font-weight: 700; }
+  .filebar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    background: var(--panel); border: 1px solid var(--panel-border-strong); color: var(--text);
+    font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; padding: 7px 12px;
+    border-radius: var(--radius); cursor: pointer;
+  }
+  .btn:hover { border-color: #4a4e56; background: #23262b; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  input[type=file] { display: none; }
+  input[type=text].fname {
+    background: var(--rail); border: 1px solid var(--panel-border-strong); color: var(--text);
+    font-family: var(--font-panel); font-size: 12px; padding: 6px 8px; border-radius: var(--radius);
+    width: 190px;
+  }
+  #status { font-size: 12px; color: var(--text-faint); }
+
+  .layout { display: flex; flex-wrap: wrap; }
+  .rail {
+    flex: 0 0 220px; background: var(--rail); border-right: 1px solid var(--panel-border);
+    padding: 16px 14px; align-self: flex-start; position: sticky; top: 0;
+  }
+  @media (max-width: 900px) { .rail { position: static; flex: 1 1 100%; border-right: none; border-bottom: 1px solid var(--panel-border); } }
+  .rail h2 { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); margin: 14px 0 8px; font-weight: 600; }
+  .rail h2:first-child { margin-top: 0; }
+  .layer-toggle { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: var(--radius); cursor: pointer; margin-bottom: 2px; }
+  .layer-toggle:hover { background: #1c1e22; }
+  .layer-toggle input { display: none; }
+  .swatch { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 11px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); opacity: .3; }
+  .layer-toggle input:checked + .swatch { opacity: 1; }
+  .layer-toggle .label { font-size: 12.5px; color: var(--text-dim); }
+  .layer-toggle input:checked ~ .label { color: var(--text); }
+  select#voiceSelect {
+    width: 100%; background: var(--panel); color: var(--text); border: 1px solid var(--panel-border-strong);
+    border-radius: var(--radius); padding: 6px 8px; font-family: var(--font-ui); font-size: 12.5px;
+  }
+  .rail-note { font-size: 11px; color: var(--text-faint); line-height: 1.55; margin-top: 4px; }
+  .rail-note kbd { font-family: var(--font-panel); background: #23262b; padding: 0 4px; border-radius: 2px; border: 1px solid var(--panel-border-strong); }
+
+  .canvas-outer { flex: 1 1 480px; overflow: auto; max-height: calc(100vh - 60px); }
+  .canvas {
+    position: relative; padding: 20px clamp(10px, 2vw, 28px) 60px; min-width: 640px;
+  }
+  .rowblock { margin-bottom: 26px; }
+  .rowblock-label { font-family: var(--font-panel); font-size: 10.5px; letter-spacing: .07em; color: var(--text-faint); margin: 0 0 8px 2px; }
+  .rowblock-mods { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+
+  .modbox {
+    position: relative; background: var(--panel); border: 1px solid var(--panel-border-strong); border-radius: 5px;
+    width: 176px; flex: 0 0 176px; overflow: visible; transition: opacity .15s ease, border-color .15s ease;
+  }
+  .modbox.inactive { opacity: .38; border-style: dashed; }
+  .modbox.dim { opacity: .22; }
+  .modbox-head {
+    padding: 7px 8px 6px 9px; border-bottom: 1px solid var(--panel-border);
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 6px;
+  }
+  .modbox-head-text { min-width: 0; }
+  .modbox-name { font-family: var(--font-panel); font-size: 11.5px; font-weight: 600; color: var(--text); line-height: 1.25; }
+  .modbox-sub { font-size: 9px; color: var(--text-faint); margin-top: 1px; }
+  .modbox-ports { padding: 3px 0; }
+
+  /* 2-spaltiges Port-Grid: links Eingänge, rechts Ausgänge */
+  .port-pair-row { display: grid; grid-template-columns: 1fr 1fr; }
+  .port-cell {
+    position: relative; display: flex; align-items: center; height: 19px; padding: 0 6px; font-size: 9.5px;
+    color: var(--text-dim); cursor: pointer; min-width: 0; gap: 4px;
+  }
+  .port-cell:hover { background: #23262b; }
+  .port-cell.empty { cursor: default; }
+  .port-cell.empty:hover { background: none; }
+  .port-cell.in { justify-content: flex-start; }
+  .port-cell.out { justify-content: flex-end; border-left: 1px solid var(--panel-border); }
+  .port-cell .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-panel); }
+  .port-cell.in .pname { text-align: left; }
+  .port-cell.out .pname { text-align: right; order: -1; }
+
+  /* Bidirektionale Ports: eigene volle Zeile unter dem 2-Spalten-Grid */
+  .portrow {
+    position: relative; display: flex; align-items: center; height: 20px; padding: 0 8px; font-size: 10px;
+    color: var(--text-dim); cursor: pointer;
+  }
+  .portrow:hover { background: #23262b; }
+  .portrow .pname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font-family: var(--font-panel); }
+
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--rail); border: 1.6px solid var(--text-faint);
+    flex: 0 0 9px; position: relative; z-index: 2;
+  }
+  .portrow.dir-bidirectional .dot { border-radius: 2px; transform: rotate(45deg); }
+  .dot.armed { background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.25); }
+  .dot.has-cable { border-color: var(--text); }
+  .dot.default-active { background: var(--ok); border-color: var(--ok); }
+  .dot.default-active.has-cable { border-color: var(--text); }
+  .portrow.dim, .port-cell.dim { opacity: .25; }
+
+  .more-ports-trigger {
+    flex: 0 0 auto; display: flex; align-items: center; justify-content: center;
+    width: 18px; height: 15px; font-size: 9.5px; line-height: 1;
+    color: var(--text-faint); font-family: var(--font-panel); font-weight: 700; cursor: pointer;
+    border: 1px solid var(--panel-border-strong); border-radius: 3px; margin-bottom: 1px;
+  }
+  .more-ports-trigger:hover { background: #23262b; color: var(--text); border-color: #4a4e56; }
+
+  .ports-popover {
+    position: absolute; top: calc(100% + 2px); left: 0; width: 100%; background: #1c1e22;
+    border: 1px solid var(--panel-border-strong); border-radius: 5px;
+    z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.6); max-height: 220px; overflow-y: auto;
+    padding: 4px 0; display: none;
+  }
+  .ports-popover.show { display: block; }
+  .popover-row {
+    display: flex; align-items: center; gap: 7px; height: 22px; padding: 0 9px; font-size: 10.5px;
+    color: var(--text-dim); cursor: pointer; font-family: var(--font-panel);
+  }
+  .popover-row:hover { background: #25282f; }
+  .popover-row .pname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .popover-row .state-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 8px; }
+  .popover-row.state-hidden .state-dot { background: var(--pitch); }   /* blau = ausgeblendet */
+  .popover-row.state-visible .state-dot { background: var(--danger); } /* rot = eingeblendet */
+  .popover-row.state-visible { color: var(--text); }
+  .popover-row.locked { cursor: not-allowed; opacity: .65; }
+  .popover-row.locked .state-dot { box-shadow: 0 0 0 2px rgba(255,255,255,.12); }
+  .popover-row .lock-icon { font-size: 8px; flex: 0 0 auto; }
+
+  svg#cables { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+  svg#cables path.cable { fill: none; stroke-width: 1.7; opacity: .85; pointer-events: stroke; cursor: pointer; }
+  svg#cables path.cable:hover { stroke-width: 2.6; opacity: 1; }
+  svg#cables path.cable.faded { opacity: .05; }
+  svg#cables path.cable.hi { stroke-width: 2.8; opacity: 1; }
+  svg#cables path.dragline { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 3 3; opacity: .8; }
+
+  #empty {
+    padding: 60px 24px; text-align: center; color: var(--text-dim); max-width: 520px; margin: 0 auto;
+  }
+  #empty h2 { color: var(--text); font-size: 16px; }
+  #empty p { font-size: 13px; line-height: 1.6; }
+
+  #toast {
+    position: fixed; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%);
+    background: #23262b; border: 1px solid var(--panel-border-strong); color: var(--text); font-size: 12.5px;
+    padding: 9px 16px; border-radius: 5px; z-index: 50; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; }
+  #toast.err { border-color: var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Patch Tool</h1>
+  <div class="filebar">
+    <button class="btn" id="loadBtn" type="button">XML laden</button>
+    <input type="file" id="fileInput" accept=".xml,text/xml">
+    <input type="text" class="fname" id="exportName" placeholder="dateiname.xml" disabled>
+    <button class="btn" id="exportBtn" type="button" disabled>Als XML speichern</button>
+    <span id="status">Keine Datei geladen.</span>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="rail">
+    <h2>Signal-Layer</h2>
+    <div id="layerList"></div>
+
+    <h2>Stimme isolieren</h2>
+    <select id="voiceSelect"><option value="">— keine —</option></select>
+
+    <h2>Bedienung</h2>
+    <p class="rail-note">
+      <kbd>Ziehen</kbd> von Port zu Port verbindet.<br>
+      <kbd>Klick</kbd> markiert einen Port, <kbd>Klick</kbd> auf zweiten verbindet.<br>
+      <kbd>Doppelklick</kbd> auf Port löscht dessen letztes Kabel.<br>
+      <kbd>Doppelklick</kbd> / <kbd>Rechtsklick</kbd> auf ein Kabel löscht es.<br>
+      Ein Port kann mehrere Kabel tragen (Stack-Cable) — einfach erneut ziehen/klicken.<br>
+      <span class="swatch" style="background:var(--ok); display:inline-block; width:8px; height:8px; border-radius:50%; vertical-align:middle;"></span> Port hat auch ohne Kabel ein sinnvolles Default-Signal (siehe Tooltip).
+    </p>
+  </nav>
+
+  <div class="canvas-outer">
+    <div class="canvas" id="canvas">
+      <div id="empty">
+        <h2>Noch keine Konfiguration geladen</h2>
+        <p>Lade deine XML-Datei (Module, Ports, Layer, Stimmen) über „XML laden“ oben. Der Patch — also die Verbindungen — setzt du direkt hier im Tool; beim Export wird alles inklusive deiner Verbindungen wieder als XML gespeichert.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  let state = null; 
+  let nextConnId = 1;
+  let activeLayers = new Set();
+  let selectedVoice = "";
+  let armed = null; 
+  let portEls = {}; 
+  let dragging = null; 
+  let downloadsCap = null;
+  let revealedPorts = new Set();   // pk urspr. elementary=false Ports, die manuell eingeblendet wurden
+  let hiddenOverride = new Set();  // pk urspr. elementary=true Ports, die manuell ausgeblendet wurden
+
+  function toast(msg, isErr) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.className = "show" + (isErr ? " err" : "");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { t.className = ""; }, 2600);
+  }
+
+  function portKey(mod, port) { return mod + "." + port; }
+
+  function findModule(id) { return state.modules.find(m => m.id === id); }
+  function findPort(modId, portId) {
+    const m = findModule(modId);
+    if (!m) return null;
+    return m.ports.find(p => p.id === portId) || null;
+  }
+  function layerColor(layerId) {
+    const l = state.layers.find(x => x.id === layerId);
+    return l ? l.color : "#888";
+  }
+
+  function isPortCabled(modId, portId) {
+    if (!state || !state.connections) return false;
+    return state.connections.some(c => 
+      (c.fromMod === modId && c.fromPort === portId) || 
+      (c.toMod === modId && c.toPort === portId)
+    );
+  }
+
+  // Ein Port ist sichtbar, wenn er verkabelt ist (immer, egal was sonst gilt),
+  // oder wenn sein Ein-/Ausblend-Status (relativ zu seinem XML-Default
+  // "elementary") das so vorsieht. p.elementary selbst wird dabei NIE verändert
+  // — nur die beiden Override-Sets steuern die Laufzeit-Sichtbarkeit.
+  function isPortVisible(modId, p) {
+    const pk = portKey(modId, p.id);
+    if (isPortCabled(modId, p.id)) return true;
+    return p.elementary ? !hiddenOverride.has(pk) : revealedPorts.has(pk);
+  }
+
+  function togglePortVisibility(modId, p) {
+    const pk = portKey(modId, p.id);
+    if (isPortCabled(modId, p.id)) {
+      toast("Verkabelte Ports können nicht ausgeblendet werden.", true);
+      return;
+    }
+    if (p.elementary) {
+      if (hiddenOverride.has(pk)) hiddenOverride.delete(pk); else hiddenOverride.add(pk);
+    } else {
+      if (revealedPorts.has(pk)) revealedPorts.delete(pk); else revealedPorts.add(pk);
+    }
+    render();
+  }
+
+  function resolveConnection(aMod, aPort, bMod, bPort) {
+    if (aMod === bMod && aPort === bPort) return "Ein Port kann nicht mit sich selbst verbunden werden.";
+    const pa = findPort(aMod, aPort), pb = findPort(bMod, bPort);
+    if (!pa || !pb) return "Port nicht gefunden.";
+    const aOut = pa.direction === "out", aIn = pa.direction === "in", aBidi = pa.direction === "bidirectional";
+    const bOut = pb.direction === "out", bIn = pb.direction === "in", bBidi = pb.direction === "bidirectional";
+
+    if (aIn && bIn) return "Zwei Eingänge lassen sich nicht direkt verbinden.";
+    if (aOut && bOut) return "Zwei Ausgänge lassen sich nicht direkt verbinden.";
+
+    let from, to;
+    if (aOut || (aBidi && bIn)) { from = { mod: aMod, port: aPort }; to = { mod: bMod, port: bPort }; }
+    else if (bOut || (bBidi && aIn)) { from = { mod: bMod, port: bPort }; to = { mod: aMod, port: aPort }; }
+    else { from = { mod: aMod, port: aPort }; to = { mod: bMod, port: bPort }; }
+
+    return { fromMod: from.mod, fromPort: from.port, toMod: to.mod, toPort: to.port };
+  }
+
+  function parseXML(text) {
+    const doc = new DOMParser().parseFromString(text, "text/xml");
+    const err = doc.querySelector("parsererror");
+    if (err) throw new Error("XML konnte nicht gelesen werden.");
+    const root = doc.documentElement;
+
+    const layers = Array.from(root.querySelectorAll("layers > layer")).map(l => ({
+      id: l.getAttribute("id"), label: l.getAttribute("label"), color: l.getAttribute("color")
+    }));
+
+    const voices = Array.from(root.querySelectorAll("voices > voice")).map(v => ({
+      id: v.getAttribute("id"), label: v.getAttribute("label")
+    }));
+
+    let functions = Array.from(root.querySelectorAll("functions > function")).map(f => ({
+      id: f.getAttribute("id"), row: parseInt(f.getAttribute("row"), 10) || 99, label: f.getAttribute("label") || f.getAttribute("id")
+    }));
+    functions.sort((a, b) => a.row - b.row);
+
+    const modules = Array.from(root.querySelectorAll("modules > module")).map(m => {
+      const ports = Array.from(m.querySelectorAll("ports > port")).map(p => ({
+        id: p.getAttribute("id"),
+        abbr: p.getAttribute("abbr") || p.getAttribute("id").slice(0, 3).toUpperCase(),
+        name: p.getAttribute("name") || p.getAttribute("id"),
+        direction: p.getAttribute("direction") || "in",
+        layer: p.getAttribute("layer") || "mod",
+        defaultActive: p.getAttribute("default_active") === "true",
+        defaultNote: p.getAttribute("default_note") || "",
+        elementary: p.getAttribute("elementary") !== "false"
+      }));
+      return {
+        id: m.getAttribute("id"),
+        name: m.getAttribute("name") || m.getAttribute("id"),
+        manufacturer: m.getAttribute("manufacturer") || "",
+        function: m.getAttribute("function") || "utility",
+        active: m.getAttribute("active") !== "false",
+        voice: m.getAttribute("voice") || "",
+        ports
+      };
+    });
+
+    const connections = Array.from(root.querySelectorAll("connections > connection")).map(c => {
+      const from = (c.getAttribute("from") || "").split(".");
+      const to = (c.getAttribute("to") || "").split(".");
+      return { id: "c" + (nextConnId++), fromMod: from[0], fromPort: from.slice(1).join("."), toMod: to[0], toPort: to.slice(1).join(".") };
+    }).filter(c => c.fromMod && c.fromPort && c.toMod && c.toPort);
+
+    return {
+      title: root.getAttribute("title") || "Patch",
+      hp: root.getAttribute("hp") || "",
+      layers, voices, functions, modules, connections
+    };
+  }
+
+  function serializeXML() {
+    const esc = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+    xml += '<patch title="' + esc(state.title) + '" hp="' + esc(state.hp) + '">\n\n';
+
+    xml += "  <layers>\n";
+    state.layers.forEach(function(l) { xml += '    <layer id="' + esc(l.id) + '" label="' + esc(l.label) + '" color="' + esc(l.color) + '"/>\n'; });
+    xml += "  </layers>\n\n";
+
+    xml += "  <voices>\n";
+    state.voices.forEach(function(v) { xml += '    <voice id="' + esc(v.id) + '" label="' + esc(v.label) + '"/>\n'; });
+    xml += "  </voices>\n\n";
+
+    xml += "  <functions>\n";
+    state.functions.forEach(function(f) { xml += '    <function id="' + esc(f.id) + '" row="' + esc(f.row) + '" label="' + esc(f.label) + '"/>\n'; });
+    xml += "  </functions>\n\n";
+
+    xml += "  <modules>\n";
+    state.modules.forEach(function(m) {
+      xml += '    <module id="' + esc(m.id) + '" name="' + esc(m.name) + '" manufacturer="' + esc(m.manufacturer) + '" function="' + esc(m.function) + '" active="' + m.active + '"' + (m.voice ? ' voice="' + esc(m.voice) + '"' : '') + '>\n';
+      xml += "      <ports>\n";
+      m.ports.forEach(function(p) {
+        xml += '        <port id="' + esc(p.id) + '" abbr="' + esc(p.abbr) + '" name="' + esc(p.name) + '" direction="' + esc(p.direction) + '" layer="' + esc(p.layer) + '"';
+        xml += ' default_active="' + (p.defaultActive ? "true" : "false") + '"';
+        if (p.defaultNote) xml += ' default_note="' + esc(p.defaultNote) + '"';
+        if (!p.elementary) xml += ' elementary="false"';
+        xml += "/>\n";
+      });
+      xml += "      </ports>\n    </module>\n";
+    });
+    xml += "  </modules>\n\n";
+
+    xml += "  <connections>\n";
+    state.connections.forEach(function(c) {
+      xml += '    <connection from="' + esc(c.fromMod) + '.' + esc(c.fromPort) + '" to="' + esc(c.toMod) + '.' + esc(c.toPort) + '"/>\n';
+    });
+    xml += "  </connections>\n\n";
+    xml += "</patch>\n";
+    return xml;
+  }
+
+  function render() {
+    const canvas = document.getElementById("canvas");
+    canvas.innerHTML = "";
+    portEls = {};
+
+    if (!state) {
+      canvas.innerHTML = document.getElementById("empty").outerHTML;
+      return;
+    }
+
+    const rowsMap = {};
+    state.functions.forEach(f => {
+      if (!rowsMap[f.row]) {
+        rowsMap[f.row] = { label: f.label, funcIds: [] };
+      }
+      rowsMap[f.row].funcIds.push(f.id);
+    });
+
+    const byFunc = {};
+    state.modules.forEach(m => { (byFunc[m.function] = byFunc[m.function] || []).push(m); });
+
+    const sortedRowKeys = Object.keys(rowsMap).map(Number).sort((a, b) => a - b);
+    sortedRowKeys.forEach(rowNum => {
+      const rowData = rowsMap[rowNum];
+      let rowModules = [];
+      
+      rowData.funcIds.forEach(fId => {
+        if (byFunc[fId]) rowModules = rowModules.concat(byFunc[fId]);
+      });
+
+      if (!rowModules.length) return;
+
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "rowblock";
+      const label = document.createElement("div");
+      label.className = "rowblock-label";
+      label.textContent = rowData.label.toUpperCase();
+      rowDiv.appendChild(label);
+      
+      const modsDiv = document.createElement("div");
+      modsDiv.className = "rowblock-mods";
+
+      rowModules.forEach(m => {
+        const box = document.createElement("div");
+        box.className = "modbox" + (!m.active ? " inactive" : "");
+        box.dataset.mod = m.id;
+
+        const headText = document.createElement("div");
+        headText.className = "modbox-head-text";
+        headText.innerHTML = `<div class="modbox-name">${escapeHtml(m.name)}</div><div class="modbox-sub">${escapeHtml(m.manufacturer)}${!m.active ? " · inaktiv" : ""}</div>`;
+
+        const head = document.createElement("div");
+        head.className = "modbox-head";
+        head.appendChild(headText);
+        box.appendChild(head);
+
+        const portsWrap = document.createElement("div");
+        portsWrap.className = "modbox-ports";
+
+        // Ein normaler Port-Punkt (funktional, verbindbar) für die
+        // 2-Spalten-Ansicht bzw. die volle Zeile bei bidirektionalen Ports.
+        function makeDot(p) {
+          const dot = document.createElement("span");
+          dot.className = "dot" + (p.defaultActive ? " default-active" : "");
+          dot.dataset.mod = m.id;
+          dot.dataset.port = p.id;
+          portEls[portKey(m.id, p.id)] = dot;
+          return dot;
+        }
+        function makePname(p) {
+          const pname = document.createElement("span");
+          pname.className = "pname";
+          pname.textContent = p.abbr;
+          return pname;
+        }
+
+        const visiblePorts = m.ports.filter(p => isPortVisible(m.id, p));
+        const ins = visiblePorts.filter(p => p.direction === "in");
+        const outs = visiblePorts.filter(p => p.direction === "out");
+        const bidi = visiblePorts.filter(p => p.direction === "bidirectional");
+
+        const rows = Math.max(ins.length, outs.length);
+        for (let i = 0; i < rows; i++) {
+          const pairRow = document.createElement("div");
+          pairRow.className = "port-pair-row";
+
+          [["in", ins[i]], ["out", outs[i]]].forEach(([side, p]) => {
+            const cell = document.createElement("div");
+            if (!p) { cell.className = "port-cell empty"; pairRow.appendChild(cell); return; }
+            cell.className = "port-cell " + side;
+            cell.title = p.name + (p.defaultNote ? " — " + p.defaultNote : "");
+            const dot = makeDot(p);
+            const pname = makePname(p);
+            cell.appendChild(dot); cell.appendChild(pname);
+            attachPortEvents(dot, m.id, p.id, cell, false);
+            pairRow.appendChild(cell);
+          });
+
+          portsWrap.appendChild(pairRow);
+        }
+
+        bidi.forEach(p => {
+          const row = document.createElement("div");
+          row.className = "portrow dir-bidirectional";
+          row.title = p.name + (p.defaultNote ? " — " + p.defaultNote : "");
+          const dot = makeDot(p);
+          const pname = makePname(p);
+          row.appendChild(dot); row.appendChild(pname);
+          attachPortEvents(dot, m.id, p.id, row, false);
+          portsWrap.appendChild(row);
+        });
+
+        box.appendChild(portsWrap);
+
+        // "[+]" nur anzeigen, wenn es an diesem Modul überhaupt etwas zum
+        // Ein-/Ausblenden gibt — der Button macht dann NUR das (kein Verbinden).
+        if (m.ports.length > 0) {
+          const trigger = document.createElement("button");
+          trigger.type = "button";
+          trigger.className = "more-ports-trigger";
+          trigger.textContent = "+";
+          trigger.title = "Ports ein-/ausblenden";
+          head.appendChild(trigger);
+
+          const popover = document.createElement("div");
+          popover.className = "ports-popover";
+
+          m.ports.forEach(p => {
+            const pk = portKey(m.id, p.id);
+            const isCabled = isPortCabled(m.id, p.id);
+            const visible = isPortVisible(m.id, p);
+
+            const prow = document.createElement("div");
+            prow.className = "popover-row " + (visible ? "state-visible" : "state-hidden") + (isCabled ? " locked" : "");
+            prow.title = p.name;
+
+            const stateDot = document.createElement("span");
+            stateDot.className = "state-dot";
+
+            const label = document.createElement("span");
+            label.className = "pname";
+            label.textContent = p.abbr + " · " + p.name;
+
+            prow.appendChild(stateDot);
+            prow.appendChild(label);
+
+            if (isCabled) {
+              const lock = document.createElement("span");
+              lock.className = "lock-icon";
+              lock.textContent = "🔒";
+              prow.appendChild(lock);
+            } else {
+              prow.addEventListener("click", (e) => { e.stopPropagation(); togglePortVisibility(m.id, p); });
+            }
+
+            popover.appendChild(prow);
+          });
+
+          trigger.addEventListener("click", (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.ports-popover.show').forEach(p => {
+              if (p !== popover) p.classList.remove('show');
+            });
+            popover.classList.toggle("show");
+          });
+
+          box.appendChild(popover);
+        }
+
+        modsDiv.appendChild(box);
+      });
+
+      rowDiv.appendChild(modsDiv);
+      canvas.appendChild(rowDiv);
+    });
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("id", "cables");
+    canvas.appendChild(svg);
+
+    requestAnimationFrame(() => { sizeSvg(); drawCables(); markCabledDots(); });
+  }
+
+  function escapeHtml(s) {
+    return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function sizeSvg() {
+    const canvas = document.getElementById("canvas");
+    const svg = document.getElementById("cables");
+    if (!svg) return;
+    svg.setAttribute("width", canvas.scrollWidth);
+    svg.setAttribute("height", canvas.scrollHeight);
+    svg.setAttribute("viewBox", `0 0 ${canvas.scrollWidth} ${canvas.scrollHeight}`);
+  }
+
+  function dotCenter(dot) {
+    const canvas = document.getElementById("canvas");
+    const cr = canvas.getBoundingClientRect();
+    const dr = dot.getBoundingClientRect();
+    return { x: dr.left + dr.width / 2 - cr.left + canvas.scrollLeft, y: dr.top + dr.height / 2 - cr.top + canvas.scrollTop };
+  }
+
+  function bezierPath(a, b) {
+    const dx = Math.max(40, Math.abs(b.x - a.x) / 2);
+    const sx1 = a.x + (a.side === "left" ? -dx : dx);
+    const sx2 = b.x + (b.side === "left" ? -dx : dx);
+    return `M ${a.x} ${a.y} C ${sx1} ${a.y}, ${sx2} ${b.y}, ${b.x} ${b.y}`;
+  }
+
+  function sideOf(mod, portId) {
+    const p = findPort(mod, portId);
+    if (!p) return "right";
+    return p.direction === "out" ? "right" : "left";
+  }
+
+  function reachableFromVoice(voiceId) {
+    if (!voiceId) return null;
+    const start = state.modules.find(m => m.voice === voiceId);
+    if (!start) return null;
+    const seen = new Set([start.id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      state.connections.forEach(c => {
+        if (seen.has(c.fromMod) && !seen.has(c.toMod)) { seen.add(c.toMod); changed = true; }
+        if (seen.has(c.toMod) && !seen.has(c.fromMod)) { seen.add(c.fromMod); changed = true; }
+      });
+    }
+    return seen;
+  }
+
+  function drawCables() {
+    const svg = document.getElementById("cables");
+    if (!svg) return;
+    Array.from(svg.querySelectorAll("path.cable")).forEach(p => p.remove());
+
+    const reach = reachableFromVoice(selectedVoice);
+
+    state.connections.forEach(c => {
+      const fromDot = portEls[portKey(c.fromMod, c.fromPort)];
+      const toDot = portEls[portKey(c.toMod, c.toPort)];
+      if (!fromDot || !toDot) return;
+      const fromPort = findPort(c.fromMod, c.fromPort);
+      const a = dotCenter(fromDot); a.side = sideOf(c.fromMod, c.fromPort);
+      const b = dotCenter(toDot); b.side = sideOf(c.toMod, c.toPort);
+
+      const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", bezierPath(a, b));
+      path.setAttribute("class", "cable");
+      path.setAttribute("stroke", layerColor(fromPort ? fromPort.layer : "mod"));
+      path.dataset.connId = c.id;
+
+      const layerOn = activeLayers.has(fromPort ? fromPort.layer : "mod");
+      const touchesVoice = reach ? (reach.has(c.fromMod) && reach.has(c.toMod)) : true;
+
+      if (reach) {
+        if (touchesVoice && layerOn) { path.classList.add("hi"); }
+        else { path.classList.add("faded"); path.style.display = layerOn ? "" : "none"; }
+      } else {
+        path.style.display = layerOn ? "" : "none";
+      }
+
+      path.addEventListener("dblclick", (e) => { e.stopPropagation(); removeConnection(c.id); });
+      path.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); removeConnection(c.id); });
+
+      svg.appendChild(path);
+    });
+
+    document.querySelectorAll(".modbox").forEach(box => {
+      const id = box.dataset.mod;
+      if (!reach) { box.classList.remove("dim"); return; }
+      box.classList.toggle("dim", !reach.has(id));
+    });
+  }
+
+  function markCabledDots() {
+    document.querySelectorAll(".dot").forEach(d => d.classList.remove("has-cable"));
+    state.connections.forEach(c => {
+      const a = portEls[portKey(c.fromMod, c.fromPort)];
+      const b = portEls[portKey(c.toMod, c.toPort)];
+      if (a) a.classList.add("has-cable");
+      if (b) b.classList.add("has-cable");
+    });
+  }
+
+  function removeConnection(id) {
+    state.connections = state.connections.filter(c => c.id !== id);
+    render(); 
+  }
+
+  function removeLastConnectionAt(mod, port) {
+    for (let i = state.connections.length - 1; i >= 0; i--) {
+      const c = state.connections[i];
+      if ((c.fromMod === mod && c.fromPort === port) || (c.toMod === mod && c.toPort === port)) {
+        state.connections.splice(i, 1);
+        render();
+        return;
+      }
+    }
+  }
+
+  function addConnection(aMod, aPort, bMod, bPort) {
+    const res = resolveConnection(aMod, aPort, bMod, bPort);
+    if (typeof res === "string") { toast(res, true); return false; }
+    
+    state.connections.push({ id: "c" + (nextConnId++), fromMod: res.fromMod, fromPort: res.fromPort, toMod: res.toMod, toPort: res.toPort });
+    
+    revealedPorts.add(portKey(res.fromMod, res.fromPort));
+    revealedPorts.add(portKey(res.toMod, res.toPort));
+    
+    render();
+    return true;
+  }
+
+  function clearArmed() {
+    if (armed) {
+      const el = portEls[portKey(armed.mod, armed.port)];
+      if (el) el.classList.remove("armed");
+    }
+    armed = null;
+  }
+
+  function attachPortEvents(dot, mod, port, row) {
+    let downPos = null, moved = false;
+
+    const onMouseDown = (e) => {
+      e.preventDefault();
+      downPos = { x: e.clientX, y: e.clientY };
+      moved = false;
+      startDrag(mod, port, e);
+      document.addEventListener("mousemove", onDocMove);
+      document.addEventListener("mouseup", onDocUp);
+    };
+
+    const onDocMove = (e) => {
+      if (downPos && (Math.abs(e.clientX - downPos.x) > 4 || Math.abs(e.clientY - downPos.y) > 4)) moved = true;
+      updateDrag(e);
+    };
+
+    const onDocUp = (e) => {
+      document.removeEventListener("mousemove", onDocMove);
+      document.removeEventListener("mouseup", onDocUp);
+      
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      let targetDot = null;
+      if (target && target.classList && target.classList.contains("dot")) {
+        targetDot = target;
+      } else if (target && target.closest) {
+        const host = target.closest(".portrow, .port-cell");
+        if (host) targetDot = host.querySelector(".dot");
+      }
+      
+      endDrag();
+      
+      if (moved) {
+        if (targetDot && targetDot !== dot) {
+          addConnection(mod, port, targetDot.dataset.mod, targetDot.dataset.port);
+        }
+      } else {
+        handleClick(mod, port, dot);
+      }
+    };
+
+    dot.addEventListener("mousedown", onMouseDown);
+    row.addEventListener("dblclick", (e) => { e.stopPropagation(); removeLastConnectionAt(mod, port); });
+    row.addEventListener("contextmenu", (e) => { e.preventDefault(); e.stopPropagation(); removeLastConnectionAt(mod, port); });
+  }
+
+  function handleClick(mod, port, dot) {
+    if (!armed) {
+      armed = { mod, port };
+      dot.classList.add("armed");
+      return;
+    }
+    if (armed.mod === mod && armed.port === port) { clearArmed(); return; }
+    const ok = addConnection(armed.mod, armed.port, mod, port);
+    clearArmed();
+    if (!ok) return;
+  }
+
+  function startDrag(mod, port, e) {
+    clearArmed();
+    const svg = document.getElementById("cables");
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    line.setAttribute("class", "dragline");
+    svg.appendChild(line);
+    dragging = { fromMod: mod, fromPort: port, lineEl: line };
+    updateDrag(e);
+  }
+
+  function updateDrag(e) {
+    if (!dragging) return;
+    const fromDot = portEls[portKey(dragging.fromMod, dragging.fromPort)];
+    if (!fromDot) return;
+
+    const a = dotCenter(fromDot); a.side = sideOf(dragging.fromMod, dragging.fromPort);
+    const canvas = document.getElementById("canvas");
+    const cr = canvas.getBoundingClientRect();
+    const b = { x: e.clientX - cr.left + canvas.scrollLeft, y: e.clientY - cr.top + canvas.scrollTop, side: "left" };
+    dragging.lineEl.setAttribute("d", bezierPath(a, b));
+  }
+
+  function endDrag() {
+    if (dragging && dragging.lineEl) dragging.lineEl.remove();
+    dragging = null;
+  }
+
+  function renderSidebar() {
+    const layerList = document.getElementById("layerList");
+    layerList.innerHTML = "";
+    activeLayers = new Set(state.layers.map(l => l.id));
+    state.layers.forEach(l => {
+      const row = document.createElement("label");
+      row.className = "layer-toggle";
+      row.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${l.color}"></span><span class="label">${escapeHtml(l.label)}</span>`;
+      row.querySelector("input").addEventListener("change", (e) => {
+        if (e.target.checked) activeLayers.add(l.id); else activeLayers.delete(l.id);
+        drawCables();
+      });
+      layerList.appendChild(row);
+    });
+
+    const sel = document.getElementById("voiceSelect");
+    sel.innerHTML = '<option value="">— keine —</option>';
+    state.voices.forEach(v => {
+      const o = document.createElement("option");
+      o.value = v.id; o.textContent = v.label;
+      sel.appendChild(o);
+    });
+    sel.onchange = () => { selectedVoice = sel.value; drawCables(); };
+  }
+
+  document.getElementById("loadBtn").addEventListener("click", () => document.getElementById("fileInput").click());
+
+  document.getElementById("fileInput").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        state = parseXML(reader.result);
+        revealedPorts.clear();
+        hiddenOverride.clear();
+
+        document.getElementById("status").textContent = `${state.title} — ${state.modules.length} Module, ${state.connections.length} Verbindungen geladen`;
+        document.getElementById("exportName").value = (file.name.replace(/\.xml$/i, "") || "patch") + "-patched.xml";
+        document.getElementById("exportName").disabled = false;
+        document.getElementById("exportBtn").disabled = false;
+        renderSidebar();
+        render();
+        window.addEventListener("resize", () => { sizeSvg(); drawCables(); });
+      } catch (err) {
+        toast("Fehler beim Einlesen: " + err.message, true);
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", async () => {
+    if (!state) return;
+    let filename = document.getElementById("exportName").value.trim() || "patch.xml";
+    if (!/\.xml$/i.test(filename)) filename += ".xml";
+    const xml = serializeXML();
+    try {
+      if (downloadsCap === null) downloadsCap = await claude.use("downloads");
+      if (!downloadsCap) { toast("Download in dieser Ansicht nicht verfügbar.", true); return; }
+      const res = await downloadsCap.save({ filename, data: xml });
+      toast(res.status === "saved" ? "Gespeichert." : "Übergeben.");
+    } catch (err) {
+      if (err && err.code === "declined") return;
+      toast("Speichern fehlgeschlagen: " + (err && err.message ? err.message : "unbekannter Fehler"), true);
+    }
+  });
+
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") clearArmed(); });
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest('.more-ports-trigger') && !e.target.closest('.ports-popover')) {
+      document.querySelectorAll('.ports-popover.show').forEach(p => p.classList.remove('show'));
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
