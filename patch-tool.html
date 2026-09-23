@@ -3,78 +3,691 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>Patch Tool — Signal-Layer &amp; Verbindungen
-        </title>
+        <title>Patch Tool — Signal-Layer &amp; Verbindungen</title>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-        <style>:root{--bg:#17181b;--panel:#1e2024;--border:#2d3035;--strong:#3a3e45;--text:#e9e7e1;--dim:#8b8d93;--faint:#55585f;--rail:#0f1012;--ok:#6fcf97;--blue:#4f9fe0;--danger:#e0594f}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:14px Inter,system-ui,sans-serif;user-select:none}header{padding:16px clamp(12px,3vw,32px) 12px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}h1{margin:0;font-size:16px}.filebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{background:var(--panel);border:1px solid var(--strong);color:var(--text);font:600 12.5px Inter;padding:7px 12px;border-radius:4px;cursor:pointer}.btn:hover{background:#23262b}.btn:disabled{opacity:.4;cursor:not-allowed}input[type=file]{display:none}.fname,select{background:var(--rail);border:1px solid var(--strong);color:var(--text);font:12px 'JetBrains Mono';padding:6px 8px;border-radius:4px}.fname{width:190px}#status{font-size:12px;color:var(--faint)}.layout{display:flex;flex-wrap:wrap}.rail{flex:0 0 220px;background:var(--rail);border-right:1px solid var(--border);padding:16px 14px;align-self:flex-start;position:sticky;top:0}.rail h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:14px 0 8px}.rail h2:first-child{margin-top:0}.layer-toggle{display:flex;align-items:center;gap:9px;padding:6px 8px;cursor:pointer}.layer-toggle input{display:none}.swatch{width:11px;height:11px;border-radius:3px;opacity:.3}.layer-toggle input:checked+.swatch{opacity:1}.label{font-size:12.5px;color:var(--dim)}.layer-toggle input:checked~.label{color:var(--text)}select{width:100%;font:12.5px Inter}.rail-note{font-size:11px;color:var(--faint);line-height:1.55}.canvas-outer{flex:1 1 480px;overflow:auto;max-height:calc(100vh - 60px)}.canvas{position:relative;padding:20px clamp(10px,2vw,28px) 60px;min-width:640px}.rowblock{margin-bottom:26px}.rowlabel{font:10.5px 'JetBrains Mono';letter-spacing:.07em;color:var(--faint);margin:0 0 8px 2px}.rowmods{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}.modbox{position:relative;width:176px;flex:0 0 176px;background:var(--panel);border:1px solid var(--strong);border-radius:5px;transition:opacity .15s}.modbox.inactive{opacity:.38;border-style:dashed}.modbox.dim{opacity:.22}.modhead{padding:7px 8px 6px 9px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:6px;cursor:pointer}.modname{font:600 11.5px 'JetBrains Mono';line-height:1.25}.modsub{font-size:9px;color:var(--faint);margin-top:1px}.ports{padding:3px 0}.pair{display:grid;grid-template-columns:1fr 1fr}.cell,.bi{position:relative;display:flex;align-items:center;height:19px;padding:0 6px;font:9.5px 'JetBrains Mono';color:var(--dim);cursor:pointer;gap:4px;min-width:0}.cell:hover,.bi:hover{background:#23262b}.cell.out{justify-content:flex-end;border-left:1px solid var(--border)}.cell.out .pname{order:-1;text-align:right}.pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bi{height:20px;padding:0 8px;justify-content:center}.bi .pname{text-align:center}.dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:var(--rail);border:1.6px solid var(--faint);position:relative;z-index:2}.bi .dot{border-radius:2px;transform:rotate(45deg)}.dot.armed{background:#fff;box-shadow:0 0 0 3px #ffffff40}.dot.has-cable{border-color:var(--text)}.dot.default{background:var(--ok);border-color:var(--ok)}.more{width:18px;height:15px;color:var(--faint);background:transparent;border:1px solid var(--strong);border-radius:3px;cursor:pointer;font:bold 10px 'JetBrains Mono'}.more.marked{color:var(--blue);border-color:var(--blue)}.popover{display:none;position:absolute;z-index:20;top:calc(100% + 2px);left:0;width:100%;max-height:220px;overflow:auto;background:#1c1e22;border:1px solid var(--strong);border-radius:5px;padding:4px 0;box-shadow:0 8px 24px #0009}.popover.show{display:block}.prow{display:flex;align-items:center;gap:7px;height:22px;padding:0 9px;color:var(--dim);font:10.5px 'JetBrains Mono';cursor:pointer}.prow:hover{background:#25282f}.prow.visible{color:var(--text)}.prow.locked{cursor:not-allowed;opacity:.65}.state-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:var(--blue)}.state-dot.default{background:var(--ok)}svg#cables{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}path.cable{fill:none;stroke-width:1.7;opacity:.85;pointer-events:stroke;cursor:pointer}path.cable:hover{stroke-width:2.6;opacity:1}path.faded{opacity:.05}path.hi{stroke-width:2.8;opacity:1}path.dragline{fill:none;stroke:#fff;stroke-width:1.6;stroke-dasharray:3 3;opacity:.8}#empty{text-align:center;padding:60px 24px;color:var(--dim)}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#23262b;border:1px solid var(--strong);padding:9px 16px;border-radius:5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}#toast.show{opacity:1}#toast.err{border-color:var(--danger)}@media(max-width:900px){.rail{position:static;flex:1 1 100%;border-right:0;border-bottom:1px solid var(--border)}} 
+        <style>
+            :root {
+                --bg: #17181b;
+                --panel: #1e2024;
+                --border: #2d3035;
+                --strong: #3a3e45;
+                --text: #e9e7e1;
+                --dim: #8b8d93;
+                --faint: #55585f;
+                --rail: #0f1012;
+                --ok: #6fcf97;
+                --blue: #4f9fe0;
+                --danger: #e0594f;
+                --r: 4px;
+            }
+            * { box-sizing: border-box; }
+            body {
+                margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+                font: 14px Inter, system-ui, sans-serif; user-select: none;
+            }
+            header {
+                padding: 16px clamp(12px, 3vw, 32px) 12px;
+                border-bottom: 1px solid var(--border);
+                display: flex; flex-wrap: wrap; gap: 12px 20px;
+                align-items: center; justify-content: space-between;
+            }
+            h1 { margin: 0; font-size: 16px; }
+            .filebar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+            .btn {
+                background: var(--panel); border: 1px solid var(--strong); color: var(--text);
+                font: 600 12.5px Inter; padding: 7px 12px; border-radius: 4px; cursor: pointer;
+            }
+            .btn:hover { background: #23262b; }
+            .btn:disabled { opacity: .4; cursor: not-allowed; }
+            input[type=file] { display: none; }
+            .fname, select {
+                background: var(--rail); border: 1px solid var(--strong); color: var(--text);
+                font: 12px 'JetBrains Mono'; padding: 6px 8px; border-radius: 4px;
+            }
+            .fname { width: 190px; }
+            #status { font-size: 12px; color: var(--faint); }
+            .layout { display: flex; flex-wrap: wrap; }
+            .rail {
+                flex: 0 0 220px; background: var(--rail); border-right: 1px solid var(--border);
+                padding: 16px 14px; align-self: flex-start; position: sticky; top: 0;
+            }
+            .rail h2 {
+                font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em;
+                color: var(--faint); margin: 14px 0 8px;
+            }
+            .rail h2:first-child { margin-top: 0; }
+            .layer-toggle {
+                display: flex; align-items: center; gap: 9px; padding: 6px 8px; cursor: pointer;
+            }
+            .layer-toggle input { display: none; }
+            .swatch {
+                width: 11px; height: 11px; border-radius: 3px; opacity: .3;
+                box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+            }
+            .layer-toggle input:checked + .swatch { opacity: 1; }
+            .label { font-size: 12.5px; color: var(--dim); }
+            .layer-toggle input:checked ~ .label { color: var(--text); }
+            select { width: 100%; font: 12.5px Inter; }
+            .rail-note { font-size: 11px; color: var(--faint); line-height: 1.55; }
+            .canvas-outer { flex: 1 1 480px; overflow: auto; max-height: calc(100vh - 60px); }
+            .canvas {
+                position: relative; padding: 20px clamp(10px, 2vw, 28px) 60px; min-width: 640px;
+            }
+            .rowblock { margin-bottom: 26px; }
+            .rowlabel {
+                font: 10.5px 'JetBrains Mono'; letter-spacing: .07em; color: var(--faint);
+                margin: 0 0 8px 2px;
+            }
+            .rowmods { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+            .modbox {
+                position: relative; width: 300px; flex: 0 0 300px; background: var(--panel);
+                border: 1px solid var(--strong); border-radius: 5px; transition: opacity .15s;
+            }
+            .modbox.inactive { opacity: .38; border-style: dashed; }
+            .modbox.dim { opacity: .22; }
+            .modhead {
+                padding: 7px 8px 6px 9px; border-bottom: 1px solid var(--border);
+                display: flex; align-items: flex-end; justify-content: space-between; gap: 6px;
+                cursor: pointer;
+            }
+            .modname { font: 600 11.5px 'JetBrains Mono'; line-height: 1.25; }
+            .modsub { font-size: 9px; color: var(--faint); margin-top: 1px; }
+            .ports { padding: 3px 0; }
+            .pair { display: grid; grid-template-columns: 1fr 1fr; }
+            .cell, .bi {
+                position: relative; display: flex; align-items: center; height: 19px; padding: 0 6px;
+                font: 9.5px 'JetBrains Mono'; color: var(--dim); cursor: pointer; gap: 4px; min-width: 0;
+            }
+            .cell:hover, .bi:hover { background: #23262b; }
+            .cell.out { justify-content: flex-end; border-left: 1px solid var(--border); }
+            .cell.out .pname { order: -1; text-align: right; }
+            .pname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            .bi { height: 20px; padding: 0 8px; justify-content: center; }
+            .bi .pname { text-align: center; }
+            .dot {
+                width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: var(--rail);
+                border: 1.6px solid var(--faint); position: relative; z-index: 2;
+            }
+            .bi .dot { border-radius: 2px; transform: rotate(45deg); }
+            .dot.armed { background: #fff; box-shadow: 0 0 0 3px #ffffff40; }
+            .dot.has-cable { border-color: var(--text); }
+            .dot.default { background: var(--ok); border-color: var(--ok); }
+            .dot.inactive { background: var(--blue); border-color: var(--blue); }
+            .more {
+                width: 18px; height: 15px; color: var(--faint); background: transparent;
+                border: 1px solid var(--strong); border-radius: 3px; cursor: pointer;
+                font: bold 10px 'JetBrains Mono';
+            }
+            .more.marked { color: var(--blue); border-color: var(--blue); }
+            .popover {
+                display: none; position: absolute; z-index: 20; top: calc(100% + 2px); left: 0;
+                width: 100%; max-height: 220px; overflow: auto; background: #1c1e22;
+                border: 1px solid var(--strong); border-radius: 5px; padding: 4px 0;
+                box-shadow: 0 8px 24px #0009;
+            }
+            .popover.show { display: block; }
+            .prow {
+                display: flex; align-items: center; gap: 7px; height: 22px; padding: 0 9px;
+                color: var(--dim); font: 10.5px 'JetBrains Mono'; cursor: pointer;
+            }
+            .prow:hover { background: #25282f; }
+            .prow.visible { color: var(--text); }
+            .prow.locked { cursor: not-allowed; opacity: .65; }
+            .state-dot {
+                width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: var(--blue);
+            }
+            .state-dot.default { background: var(--ok); }
+            svg#cables {
+                position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible;
+            }
+            path.cable { fill: none; stroke-width: 1.7; opacity: .85; pointer-events: stroke; cursor: pointer; }
+            path.cable:hover { stroke-width: 2.6; opacity: 1; }
+            path.faded { opacity: .05; }
+            path.hi { stroke-width: 2.8; opacity: 1; }
+            path.dragline { fill: none; stroke: #fff; stroke-width: 1.6; stroke-dasharray: 3 3; opacity: .8; }
+            #empty { text-align: center; padding: 60px 24px; color: var(--dim); }
+            #toast {
+                position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+                background: #23262b; border: 1px solid var(--strong); padding: 9px 16px; border-radius: 5px;
+                opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 50;
+            }
+            #toast.show { opacity: 1; }
+            #toast.err { border-color: var(--danger); }
+            @media (max-width: 900px) {
+                .rail { position: static; flex: 1 1 100%; border-right: 0; border-bottom: 1px solid var(--border); }
+            }
         </style>
     </head>
     <body>
-        <header><h1>Patch Tool</h1>
+        <header>
+            <h1>Patch Tool</h1>
             <div class="filebar">
-                <button class="btn" id="load">XML laden
-                </button>
+                <button class="btn" id="load">XML laden</button>
                 <input id="file" type="file" accept=".xml,text/xml">
                 <input id="name" class="fname" placeholder="dateiname.xml" disabled>
-                <button class="btn" id="save" disabled>Als XML speichern
-                </button>
-                <span id="status">Keine Datei geladen.
-                </span>
+                <button class="btn" id="save" disabled>Als XML speichern</button>
+                <span id="status">Keine Datei geladen.</span>
             </div>
         </header>
+
         <div class="layout">
-            <nav class="rail"><h2>Signal-Layer</h2>
-                <div id="layers">
-                </div><h2>Stimme isolieren</h2>
+            <nav class="rail">
+                <h2>Signal-Layer</h2>
+                <div id="layers"></div>
+                <h2>Stimme isolieren</h2>
                 <select id="voice">
-                    <option value="">— keine —
-                    </option>
-                </select><h2>Bedienung</h2>
-                <p class="rail-note"><b>Ziehen</b> oder <b>Klick, Klick</b> verbindet Ports.
-                    <br><b>Doppelklick/Rechtsklick</b> auf Port oder Kabel löscht eine Verbindung.
-                    <br>Ein Port kann mehrere Kabel tragen.
-                    <br>
-                    <span style="color:var(--ok)">●
-                    </span> Default aktiv &nbsp; 
-                    <span style="color:var(--blue)">●
-                    </span> Default inaktiv
+                    <option value="">— keine —</option>
+                </select>
+                <h2>Bedienung</h2>
+                <p class="rail-note">
+                    <b>Ziehen</b> oder <b>Klick, Klick</b> verbindet Ports.<br>
+                    <b>Doppelklick/Rechtsklick</b> auf Port oder Kabel löscht eine Verbindung.<br>
+                    Ein Port kann mehrere Kabel tragen.<br>
+                    <span style="color:var(--ok)">●</span> Default aktiv &nbsp;
+                    <span style="color:var(--blue)">●</span> Default inaktiv
                 </p>
             </nav>
+
             <main class="canvas-outer">
                 <div id="canvas" class="canvas">
-                    <div id="empty"><h2>Noch keine Konfiguration geladen</h2>
-                        <p>Lade deine XML-Datei über „XML laden“.
-                        </p>
+                    <div id="empty">
+                        <h2>Noch keine Konfiguration geladen</h2>
+                        <p>Lade deine XML-Datei über „XML laden“.</p>
                     </div>
                 </div>
             </main>
         </div>
-        <div id="toast">
-        </div>
-<script>  
-(()=>{'use strict';let S=null,sourceDoc=null,next=1,active=new Set(),selectedVoice='',selectedModule='',armed=null,ports={},drag=null,downloadCap=null;
-const $=id=>document.getElementById(id),key=(m,p)=>m+'.'+p,mod=id=>S.modules.find(x=>x.id===id),port=(m,p)=>{const x=mod(m);return x&&x.ports.find(y=>y.id===p)},esc=x=>String(x??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-function toast(s,err){const t=$('toast');t.textContent=s;t.className='show'+(err?' err':'');clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2600)}
-function cabled(m,p){return S.connections.some(c=>(c.fromMod===m&&c.fromPort===p)||(c.toMod===m&&c.toPort===p))}
-/* default_active is deliberately the only visibility setting. elementary is ignored. */
-function visible(m,p){return p.defaultActive||cabled(m,p.id)}
-function toggle(m,p){if(cabled(m,p.id)){toast('Verkabelte Ports können nicht ausgeblendet werden.',true);return}p.defaultActive=!p.defaultActive;render()}
-function parse(text){const d=new DOMParser().parseFromString(text,'text/xml');if(d.querySelector('parsererror'))throw Error('XML konnte nicht gelesen werden.');sourceDoc=d;const r=d.documentElement;const layers=[...r.querySelectorAll('layers>layer')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label'),color:x.getAttribute('color')}));const voices=[...r.querySelectorAll('voices>voice')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label')}));const functions=[...r.querySelectorAll('functions>function')].map(x=>({id:x.getAttribute('id'),row:+x.getAttribute('row')||99,label:x.getAttribute('label')||x.getAttribute('id')})).sort((a,b)=>a.row-b.row);const modules=[...r.querySelectorAll('modules>module')].map(m=>({id:m.getAttribute('id'),name:m.getAttribute('name')||m.getAttribute('id'),manufacturer:m.getAttribute('manufacturer')||'',function:m.getAttribute('function')||'utility',active:m.getAttribute('active')!=='false',voice:m.getAttribute('voice')||'',ports:[...m.querySelectorAll('ports>port')].map(p=>({id:p.getAttribute('id'),abbr:p.getAttribute('abbr')||p.getAttribute('id').slice(0,3).toUpperCase(),name:p.getAttribute('name')||p.getAttribute('id'),direction:p.getAttribute('direction')||'in',layer:p.getAttribute('layer')||'mod',defaultActive:p.getAttribute('default_active')==='true',defaultNote:p.getAttribute('default_note')||''}))}));const connections=[...r.querySelectorAll('connections>connection')].map(c=>{const a=(c.getAttribute('from')||'').split('.'),b=(c.getAttribute('to')||'').split('.');return{id:'c'+next++,fromMod:a.shift(),fromPort:a.join('.'),toMod:b.shift(),toPort:b.join('.')}}).filter(c=>c.fromMod&&c.fromPort&&c.toMod&&c.toPort);return{title:r.getAttribute('title')||'Patch',hp:r.getAttribute('hp')||'',layers,voices,functions,modules,connections}}
-function resolve(am,ap,bm,bp){if(am===bm&&ap===bp)return'Ein Port kann nicht mit sich selbst verbunden werden.';const a=port(am,ap),b=port(bm,bp);if(!a||!b)return'Port nicht gefunden.';if(a.direction==='in'&&b.direction==='in')return'Zwei Eingänge lassen sich nicht direkt verbinden.';if(a.direction==='out'&&b.direction==='out')return'Zwei Ausgänge lassen sich nicht direkt verbinden.';if(a.direction==='out'||(a.direction==='bidirectional'&&b.direction==='in'))return{fromMod:am,fromPort:ap,toMod:bm,toPort:bp};return{fromMod:bm,fromPort:bp,toMod:am,toPort:ap}}
-function add(am,ap,bm,bp){const x=resolve(am,ap,bm,bp);if(typeof x==='string'){toast(x,true);return}S.connections.push({id:'c'+next++,...x});render()}
-function connected(start){if(!start)return null;const seen=new Set([start]);let changed=true;while(changed){changed=false;S.connections.forEach(c=>{if(seen.has(c.fromMod)&&!seen.has(c.toMod)){seen.add(c.toMod);changed=true}if(seen.has(c.toMod)&&!seen.has(c.fromMod)){seen.add(c.fromMod);changed=true}})}return seen}
-function center(el){const c=$('canvas').getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left+r.width/2-c.left+$('canvas').scrollLeft,y:r.top+r.height/2-c.top+$('canvas').scrollTop}}
-function draw(){const svg=$('cables');if(!svg)return;svg.querySelectorAll('path.cable').forEach(x=>x.remove());const start=selectedVoice?S.modules.find(m=>m.voice===selectedVoice)?.id:selectedModule,reach=connected(start);S.connections.forEach(c=>{const a=ports[key(c.fromMod,c.fromPort)],b=ports[key(c.toMod,c.toPort)];if(!a||!b)return;const fp=port(c.fromMod,c.fromPort),ca=center(a),cb=center(b),p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',`M ${ca.x} ${ca.y} L ${cb.x} ${cb.y}`);p.setAttribute('class','cable');p.setAttribute('stroke',S.layers.find(l=>l.id===fp.layer)?.color||'#888');const hi=!reach||(reach.has(c.fromMod)&&reach.has(c.toMod));if(!active.has(fp.layer))p.style.display='none';else if(!hi)p.classList.add('faded');p.ondblclick=e=>{e.stopPropagation();remove(c.id)};p.oncontextmenu=e=>{e.preventDefault();remove(c.id)};svg.appendChild(p)});document.querySelectorAll('.modbox').forEach(b=>b.classList.toggle('dim',!!reach&&!reach.has(b.dataset.mod)))}
-function remove(id){S.connections=S.connections.filter(c=>c.id!==id);render()}
-function attach(dot,m,p,row){let down,moved=false;dot.onmousedown=e=>{e.preventDefault();down={x:e.clientX,y:e.clientY};moved=false;armed=null;const line=document.createElementNS('http://www.w3.org/2000/svg','path');line.setAttribute('class','dragline');$('cables').appendChild(line);drag={line};const move=q=>{if(Math.hypot(q.clientX-down.x,q.clientY-down.y)>4)moved=true;if(drag){const a=center(dot),cr=$('canvas').getBoundingClientRect(),b={x:q.clientX-cr.left+$('canvas').scrollLeft,y:q.clientY-cr.top+$('canvas').scrollTop};line.setAttribute('d',`M ${a.x} ${a.y} L ${b.x} ${b.y}`)}},up=q=>{document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);line.remove();drag=null;const t=document.elementFromPoint(q.clientX,q.clientY),d=t?.closest?.('.dot');if(moved&&d&&d!==dot)add(m,p,d.dataset.mod,d.dataset.port);else if(!moved){if(armed){if(armed.m===m&&armed.p===p)armed=null;else{add(armed.m,armed.p,m,p);armed=null}}else{armed={m,p};dot.classList.add('armed')}}};document.addEventListener('mousemove',move);document.addEventListener('mouseup',up)};row.ondblclick=e=>{e.stopPropagation();for(let i=S.connections.length-1;i>=0;i--){const c=S.connections[i];if((c.fromMod===m&&c.fromPort===p)||(c.toMod===m&&c.toPort===p)){S.connections.splice(i,1);render();return}}};row.oncontextmenu=e=>{e.preventDefault();row.ondblclick(e)}}
-function render(){const c=$('canvas');c.innerHTML='';ports={};if(!S){c.innerHTML=$('empty').outerHTML;return}const rows={};S.functions.forEach(f=>(rows[f.row]??={label:f.label,ids:[]}).ids.push(f.id));Object.keys(rows).sort((a,b)=>a-b).forEach(n=>{const r=rows[n],ms=S.modules.filter(m=>r.ids.includes(m.function));if(!ms.length)return;const block=document.createElement('section');block.className='rowblock';block.innerHTML=`<div class="rowlabel">${esc(r.label).toUpperCase()}</div>`;const list=document.createElement('div');list.className='rowmods';ms.forEach(m=>{const box=document.createElement('article');box.className='modbox'+(m.active?'':' inactive');box.dataset.mod=m.id;const head=document.createElement('div');head.className='modhead';head.innerHTML=`<div><div class="modname">${esc(m.name)}</div><div class="modsub">${esc(m.manufacturer)}${m.active?'':' · inaktiv'}</div></div>`;const hasHidden=m.ports.some(p=>!p.defaultActive&&!cabled(m.id,p.id));const more=document.createElement('button');more.className='more'+(hasHidden?' marked':'');more.textContent='+';more.title='Ports ein-/ausblenden';head.appendChild(more);head.onclick=e=>{if(e.target!==more){selectedModule=selectedModule===m.id?'':m.id;selectedVoice='';$('voice').value='';draw()}};box.appendChild(head);const pw=document.createElement('div');pw.className='ports';const ps=m.ports.filter(p=>visible(m.id,p)),ins=ps.filter(p=>p.direction==='in'),outs=ps.filter(p=>p.direction==='out'),bis=ps.filter(p=>p.direction==='bidirectional');for(let i=0;i<Math.max(ins.length,outs.length);i++){const row=document.createElement('div');row.className='pair';[['in',ins[i]],['out',outs[i]]].forEach(([side,p])=>{const cell=document.createElement('div');cell.className='cell '+side;if(!p){row.appendChild(cell);return}const d=document.createElement('span');d.className='dot'+(p.defaultActive?' default':'');d.dataset.mod=m.id;d.dataset.port=p.id;ports[key(m.id,p.id)]=d;cell.title=p.name+(p.defaultNote?' — '+p.defaultNote:'');cell.append(d,Object.assign(document.createElement('span'),{className:'pname',textContent:p.abbr}));attach(d,m.id,p.id,cell);row.appendChild(cell)});pw.appendChild(row)}bis.forEach(p=>{const row=document.createElement('div');row.className='bi';const d=document.createElement('span');d.className='dot'+(p.defaultActive?' default':'');d.dataset.mod=m.id;d.dataset.port=p.id;ports[key(m.id,p.id)]=d;row.append(d,Object.assign(document.createElement('span'),{className:'pname',textContent:p.abbr}));attach(d,m.id,p.id,row);pw.appendChild(row)});box.appendChild(pw);const pop=document.createElement('div');pop.className='popover';m.ports.forEach(p=>{const v=visible(m.id,p),locked=cabled(m.id,p.id),pr=document.createElement('div');pr.className='prow'+(v?' visible':'')+(locked?' locked':'');pr.innerHTML=`<span class="state-dot${p.defaultActive?' default':''}></span><span class="pname">${esc(p.abbr+' · '+p.name)}</span>${locked?'🔒':''}`;if(!locked)pr.onclick=e=>{e.stopPropagation();toggle(m.id,p)};pop.appendChild(pr)});more.onclick=e=>{e.stopPropagation();document.querySelectorAll('.popover.show').forEach(x=>x!==pop&&x.classList.remove('show'));pop.classList.toggle('show')};box.appendChild(pop);list.appendChild(box)});block.appendChild(list);c.appendChild(block)});const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='cables';c.appendChild(svg);requestAnimationFrame(()=>{svg.setAttribute('width',c.scrollWidth);svg.setAttribute('height',c.scrollHeight);svg.setAttribute('viewBox',`0 0 ${c.scrollWidth} ${c.scrollHeight}`);S.connections.forEach(x=>{ports[key(x.fromMod,x.fromPort)]?.classList.add('has-cable');ports[key(x.toMod,x.toPort)]?.classList.add('has-cable')});draw()})}
-function sidebar(){active=new Set(S.layers.map(x=>x.id));$('layers').innerHTML='';S.layers.forEach(l=>{const x=document.createElement('label');x.className='layer-toggle';x.innerHTML=`<input type="checkbox" checked><span class="swatch" style="background:${l.color}"></span><span class="label">${esc(l.label)}</span>`;x.querySelector('input').onchange=e=>{e.target.checked?active.add(l.id):active.delete(l.id);draw()};$('layers').appendChild(x)});$('voice').innerHTML='<option value="">— keine —</option>'+S.voices.map(v=>`<option value="${esc(v.id)}">${esc(v.label)}</option>`).join('');$('voice').onchange=e=>{selectedVoice=e.target.value;selectedModule='';draw()}}
-function exportXML(){const d=sourceDoc.cloneNode(true),root=d.documentElement;S.modules.forEach(m=>m.ports.forEach(p=>{const node=[...root.querySelectorAll('modules>module')].find(x=>x.getAttribute('id')===m.id)?.querySelector(`ports>port[id="${p.id.replace(/"/g,'&quot;')}"]`);if(node)node.setAttribute('default_active',p.defaultActive?'true':'false')}));let con=root.querySelector('connections');if(!con){con=d.createElement('connections');root.appendChild(con)}while(con.firstChild)con.removeChild(con.firstChild);S.connections.forEach(c=>{const n=d.createElement('connection');n.setAttribute('from',c.fromMod+'.'+c.fromPort);n.setAttribute('to',c.toMod+'.'+c.toPort);con.appendChild(n)});return new XMLSerializer().serializeToString(d)}
-$('load').onclick=()=>$('file').click();$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{try{S=parse(r.result);selectedModule='';selectedVoice='';$('status').textContent=`${S.title} — ${S.modules.length} Module, ${S.connections.length} Verbindungen geladen`;$('name').value=f.name.replace(/\.xml$/i,'')+'-patched.xml';$('name').disabled=$('save').disabled=false;sidebar();render()}catch(x){toast('Fehler beim Einlesen: '+x.message,true)}};r.readAsText(f)};
-$('save').onclick=async()=>{let n=$('name').value.trim()||'patch.xml';if(!/\.xml$/i.test(n))n+='.xml';const data=exportXML();try{if(window.claude?.use){downloadCap??=await claude.use('downloads');if(downloadCap){const r=await downloadCap.save({filename:n,data});toast(r.status==='saved'?'Gespeichert.':'Übergeben.');return}}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/xml'}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Gespeichert.')}catch(x){toast('Speichern fehlgeschlagen: '+x.message,true)}};document.onclick=e=>{if(!e.target.closest('.more')&&!e.target.closest('.popover'))document.querySelectorAll('.popover.show').forEach(x=>x.classList.remove('show'))};window.onresize=()=>{const s=$('cables');if(s){s.setAttribute('width',$('canvas').scrollWidth);s.setAttribute('height',$('canvas').scrollHeight);draw()}};document.onkeydown=e=>{if(e.key==='Escape')armed=null}
-})();
-</script>
+
+        <div id="toast"></div>
+
+        <script>
+        (() => {
+            'use strict';
+
+            const full_labels = true;
+            let S = null, sourceDoc = null, next = 1, active = new Set(), selectedVoice = '', selectedModule = '', armed = null, ports = {}, drag = null, downloadCap = null;
+
+            const $ = id => document.getElementById(id);
+            const key = (m, p) => m + '.' + p;
+            const mod = id => S && S.modules.find(x => x.id === id);
+            const port = (m, p) => {
+                const x = mod(m);
+                return x && x.ports.find(y => y.id === p);
+            };
+            const portDisplayName = p => (full_labels ? (p.name || p.label || p.id) : (p.abbr || p.name || p.label || p.id));
+            const esc = value => String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            function toast(s, err) {
+                const t = $('toast');
+                t.textContent = s;
+                t.className = 'show' + (err ? ' err' : '');
+                clearTimeout(toast.t);
+                toast.t = setTimeout(() => t.className = '', 2600);
+            }
+
+            function cabled(m, p) {
+                return S.connections.some(c => (c.fromMod === m && c.fromPort === p) || (c.toMod === m && c.toPort === p));
+            }
+
+            function visible(m, p) {
+                return p.defaultActive || cabled(m, p.id);
+            }
+
+            function toggle(m, p) {
+                if (cabled(m, p.id)) {
+                    toast('Verkabelte Ports können nicht ausgeblendet werden.', true);
+                    return;
+                }
+                p.defaultActive = !p.defaultActive;
+                render();
+            }
+
+            function parse(text) {
+                const d = new DOMParser().parseFromString(text, 'text/xml');
+                if (d.querySelector('parsererror')) throw Error('XML konnte nicht gelesen werden.');
+                sourceDoc = d;
+
+                const r = d.documentElement;
+                const layers = [...r.querySelectorAll('layers > layer')].map(x => ({
+                    id: x.getAttribute('id'),
+                    label: x.getAttribute('label') || x.getAttribute('id'),
+                    color: x.getAttribute('color') || '#ffffff'
+                }));
+
+                const voices = [...r.querySelectorAll('voices > voice')].map(x => ({
+                    id: x.getAttribute('id'),
+                    label: x.getAttribute('label') || x.getAttribute('id')
+                }));
+
+                const functions = [...r.querySelectorAll('functions > function')].map(x => ({
+                    id: x.getAttribute('id'),
+                    label: x.getAttribute('label') || x.getAttribute('id'),
+                    row: Number(x.getAttribute('row') || 0)
+                }));
+
+                const modules = [...r.querySelectorAll('modules > module')].map(m => {
+                    const moduleId = m.getAttribute('id');
+                    const portsList = [...m.querySelectorAll('ports > port')].map(p => ({
+                        id: p.getAttribute('id'),
+                        name: p.getAttribute('name') || p.getAttribute('label') || p.getAttribute('id'),
+                        label: p.getAttribute('label') || p.getAttribute('id'),
+                        direction: p.getAttribute('direction') || 'in',
+                        defaultActive: String(p.getAttribute('default_active') || 'false').toLowerCase() === 'true',
+                        elementary: String(p.getAttribute('elementary') || 'true').toLowerCase() !== 'false',
+                        abbr: p.getAttribute('abbr') || ''
+                    }));
+
+                    return {
+                        id: moduleId,
+                        name: m.getAttribute('name') || moduleId,
+                        manufacturer: m.getAttribute('manufacturer') || '',
+                        function: m.getAttribute('function') || '',
+                        voice: m.getAttribute('voice') || '',
+                        active: String(m.getAttribute('active') || 'true').toLowerCase() === 'true',
+                        ports: portsList
+                    };
+                });
+
+                const connections = [...r.querySelectorAll('connections > connection')].map(c => {
+                    const a = (c.getAttribute('from') || '').split('.');
+                    const b = (c.getAttribute('to') || '').split('.');
+                    const fromMod = a[0] || '', fromPort = a[1] || '';
+                    const toMod = b[0] || '', toPort = b[1] || '';
+                    return {
+                        id: 'c' + (next++),
+                        fromMod: fromMod,
+                        fromPort: fromPort,
+                        toMod: toMod,
+                        toPort: toPort,
+                        type: c.getAttribute('type') || 'signal'
+                    };
+                });
+
+                return {
+                    title: r.getAttribute('title') || 'Patch',
+                    hp: r.getAttribute('hp') || '0',
+                    layers,
+                    voices,
+                    functions,
+                    modules,
+                    connections
+                };
+            }
+
+            function resolve(am, ap, bm, bp) {
+                if (am === bm && ap === bp) return 'Ein Port kann nicht mit sich selbst verbunden werden.';
+                const a = port(am, ap);
+                const b = port(bm, bp);
+                if (!a || !b) return 'Port nicht gefunden.';
+                if (a.direction === 'in' && b.direction === 'in') return 'Ein Eingang kann nicht mit einem Eingang verbunden werden.';
+                if (a.direction === 'out' && b.direction === 'out') return 'Ein Ausgang kann nicht mit einem Ausgang verbunden werden.';
+                return { fromMod: am, fromPort: ap, toMod: bm, toPort: bp };
+            }
+
+            function add(am, ap, bm, bp) {
+                const x = resolve(am, ap, bm, bp);
+                if (typeof x === 'string') {
+                    toast(x, true);
+                    return;
+                }
+                S.connections.push({ id: 'c' + (next++), ...x });
+                render();
+            }
+
+            function connected(start) {
+                if (!start) return null;
+                const seen = new Set([start]);
+                let changed = true;
+                while (changed) {
+                    changed = false;
+                    S.connections.forEach(c => {
+                        if (seen.has(c.fromMod) && !seen.has(c.toMod)) {
+                            seen.add(c.toMod); changed = true;
+                        }
+                        if (seen.has(c.toMod) && !seen.has(c.fromMod)) {
+                            seen.add(c.fromMod); changed = true;
+                        }
+                    });
+                }
+                return seen;
+            }
+
+            function center(el) {
+                const c = $('canvas').getBoundingClientRect();
+                const r = el.getBoundingClientRect();
+                return {
+                    x: r.left + r.width / 2 - c.left + $('canvas').scrollLeft,
+                    y: r.top + r.height / 2 - c.top + $('canvas').scrollTop
+                };
+            }
+
+            function straight(a, b) {
+                return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+            }
+
+            function draw() {
+                const svg = $('cables');
+                if (!svg) return;
+                svg.querySelectorAll('path.cable').forEach(x => x.remove());
+
+                const start = selectedVoice ? S.modules.find(m => m.voice === selectedVoice)?.id : selectedModule;
+                const reach = connected(start);
+
+                S.connections.forEach(c => {
+                    const a = ports[key(c.fromMod, c.fromPort)];
+                    const b = ports[key(c.toMod, c.toPort)];
+                    if (!a || !b) return;
+
+                    const pa = center(a.dot);
+                    const pb = center(b.dot);
+                    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    p.setAttribute('d', straight(pa, pb));
+                    p.setAttribute('stroke', S.layers.find(l => l.id === c.type)?.color || '#ffffff');
+                    p.setAttribute('class', 'cable' + (reach && !reach.has(c.fromMod) && !reach.has(c.toMod) ? ' faded' : ''));
+                    p.addEventListener('dblclick', () => {
+                        S.connections = S.connections.filter(x => x.id !== c.id);
+                        render();
+                    });
+                    svg.appendChild(p);
+                });
+            }
+
+            function remove(id) {
+                S.connections = S.connections.filter(c => c.id !== id);
+                render();
+            }
+
+            function attach(dot, m, p, row) {
+                let down = null, moved = false;
+                dot.onmousedown = e => {
+                    e.preventDefault();
+                    down = { x: e.clientX, y: e.clientY };
+                    moved = false;
+                    armed = { mod: m, port: p, row };
+
+                    const svg = $('cables');
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    line.setAttribute('class', 'dragline');
+                    line.setAttribute('d', 'M 0 0 L 0 0');
+                    line.dataset.temp = '1';
+                    svg.appendChild(line);
+                    drag = { line, start: center(dot), current: center(dot) };
+                };
+
+                dot.onmousemove = e => {
+                    if (!drag || !armed) return;
+                    drag.current = { x: e.clientX, y: e.clientY };
+                    const p1 = center(dot);
+                    const p2 = { x: e.clientX - $('canvas').getBoundingClientRect().left + $('canvas').scrollLeft, y: e.clientY - $('canvas').getBoundingClientRect().top + $('canvas').scrollTop };
+                    drag.line.setAttribute('d', straight(p1, p2));
+                    moved = true;
+                };
+
+                dot.onmouseup = e => {
+                    if (!drag || !armed) return;
+                    const target = e.target.closest('.dot');
+                    if (target && target !== dot) {
+                        const targetMod = target.dataset.mod;
+                        const targetPort = target.dataset.port;
+                        if (targetMod && targetPort) {
+                            add(armed.mod, armed.port, targetMod, targetPort);
+                        }
+                    }
+                    drag.line.remove();
+                    drag = null; armed = null;
+                };
+            }
+
+            function render() {
+                const c = $('canvas');
+                c.innerHTML = '';
+                ports = {};
+
+                if (!S) {
+                    c.innerHTML = $('empty').outerHTML;
+                    return;
+                }
+
+                const rows = {};
+                S.functions.forEach(f => {
+                    (rows[f.row] ??= { label: f.label, ids: [] }).ids.push(f.id);
+                });
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('id', 'cables');
+                svg.setAttribute('width', '100%');
+                svg.setAttribute('height', '100%');
+                svg.style.position = 'absolute';
+                svg.style.inset = '0';
+                c.appendChild(svg);
+
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.minHeight = '100%';
+                c.appendChild(wrapper);
+
+                Object.keys(rows).sort((a, b) => Number(a) - Number(b)).forEach(rowIndex => {
+                    const row = rows[rowIndex];
+                    const rowEl = document.createElement('div');
+                    rowEl.className = 'rowblock';
+
+                    const labelEl = document.createElement('div');
+                    labelEl.className = 'rowlabel';
+                    labelEl.textContent = row.label.toUpperCase();
+                    rowEl.appendChild(labelEl);
+
+                    const modsEl = document.createElement('div');
+                    modsEl.className = 'rowmods';
+
+                    row.ids.forEach(functionId => {
+                        const fn = S.functions.find(f => f.id === functionId);
+                        const mods = S.modules.filter(m => m.function === functionId || (fn && m.function === functionId));
+                        mods.forEach(modData => {
+                            const box = document.createElement('div');
+                            box.className = 'modbox' + (!modData.active ? ' inactive' : '') + (selectedVoice && modData.voice && modData.voice !== selectedVoice ? ' dim' : '');
+                            box.title = modData.name;
+
+                            const head = document.createElement('div');
+                            head.className = 'modhead';
+                            head.onclick = () => {
+                                selectedModule = selectedModule === modData.id ? '' : modData.id;
+                                render();
+                            };
+
+                            const nameWrap = document.createElement('div');
+                            const name = document.createElement('div');
+                            name.className = 'modname';
+                            name.textContent = modData.name;
+                            nameWrap.appendChild(name);
+                            if (modData.manufacturer) {
+                                const sub = document.createElement('div');
+                                sub.className = 'modsub';
+                                sub.textContent = modData.manufacturer;
+                                nameWrap.appendChild(sub);
+                            }
+                            head.appendChild(nameWrap);
+
+                            const chip = document.createElement('div');
+                            chip.style.font = "10px 'JetBrains Mono'";
+                            chip.style.color = '#8b8d93';
+                            chip.textContent = modData.voice || '';
+                            head.appendChild(chip);
+                            box.appendChild(head);
+
+                            const portWrap = document.createElement('div');
+                            portWrap.className = 'ports';
+
+                            const ins = modData.ports.filter(p => p.direction !== 'out');
+                            const outs = modData.ports.filter(p => p.direction === 'out');
+                            const maxLen = Math.max(ins.length, outs.length);
+                            for (let i = 0; i < maxLen; i++) {
+                                const rowSpan = document.createElement('div');
+                                rowSpan.className = 'pair';
+                                const inCell = document.createElement('div');
+                                inCell.className = 'cell';
+                                const outCell = document.createElement('div');
+                                outCell.className = 'cell out';
+
+                                if (ins[i]) {
+                                    const p = ins[i];
+                                    const dot = document.createElement('span');
+                                    dot.className = 'dot' + (p.defaultActive ? ' default' : ' inactive') + (cabled(modData.id, p.id) ? ' has-cable' : '');
+                                    dot.dataset.mod = modData.id;
+                                    dot.dataset.port = p.id;
+                                    if (visible(modData.id, p)) dot.classList.add('armed');
+                                    attach(dot, modData.id, p.id, rowIndex);
+                                    inCell.appendChild(dot);
+                                    const label = document.createElement('span');
+                                    label.className = 'pname';
+                                    label.textContent = portDisplayName(p);
+                                    inCell.appendChild(label);
+                                }
+                                if (outs[i]) {
+                                    const p = outs[i];
+                                    const dot = document.createElement('span');
+                                    dot.className = 'dot' + (p.defaultActive ? ' default' : ' inactive') + (cabled(modData.id, p.id) ? ' has-cable' : '');
+                                    dot.dataset.mod = modData.id;
+                                    dot.dataset.port = p.id;
+                                    if (visible(modData.id, p)) dot.classList.add('armed');
+                                    attach(dot, modData.id, p.id, rowIndex);
+                                    const label = document.createElement('span');
+                                    label.className = 'pname';
+                                    label.textContent = portDisplayName(p);
+                                    outCell.appendChild(label);
+                                    outCell.appendChild(dot);
+                                }
+
+                                rowSpan.appendChild(inCell);
+                                rowSpan.appendChild(outCell);
+                                portWrap.appendChild(rowSpan);
+                                if (ins[i]) ports[key(modData.id, ins[i].id)] = { dot: inCell.querySelector('.dot') };
+                                if (outs[i]) ports[key(modData.id, outs[i].id)] = { dot: outCell.querySelector('.dot') };
+                            }
+
+                            box.appendChild(portWrap);
+                            modsEl.appendChild(box);
+                        });
+                    });
+
+                    rowEl.appendChild(modsEl);
+                    wrapper.appendChild(rowEl);
+                });
+
+                draw();
+            }
+
+            function sidebar() {
+                active = new Set(S.layers.map(x => x.id));
+                $('layers').innerHTML = '';
+                S.layers.forEach(layer => {
+                    const label = document.createElement('label');
+                    label.className = 'layer-toggle';
+                    label.innerHTML = `<input type="checkbox" checked><span class="swatch" style="background:${layer.color}"></span><span class="label">${esc(layer.label)}</span>`;
+                    const input = label.querySelector('input');
+                    input.onchange = () => {
+                        if (input.checked) active.add(layer.id); else active.delete(layer.id);
+                        draw();
+                    };
+                    $('layers').appendChild(label);
+                });
+
+                const voiceSel = $('voice');
+                voiceSel.innerHTML = '<option value="">— keine —</option>';
+                S.voices.forEach(v => {
+                    const option = document.createElement('option');
+                    option.value = v.id;
+                    option.textContent = v.label;
+                    voiceSel.appendChild(option);
+                });
+                voiceSel.value = selectedVoice;
+                voiceSel.onchange = () => {
+                    selectedVoice = voiceSel.value;
+                    render();
+                };
+            }
+
+            function exportXML() {
+                const d = sourceDoc ? sourceDoc.cloneNode(true) : document.implementation.createDocument(null, 'patch');
+                const root = d.documentElement || d.createElement('patch');
+                if (!d.documentElement) d.appendChild(root);
+                root.setAttribute('title', S.title || 'Patch');
+                root.setAttribute('hp', String(S.hp || 0));
+
+                S.modules.forEach(module => {
+                    const node = [...root.querySelectorAll('modules > module')].find(x => x.getAttribute('id') === module.id);
+                    if (node) {
+                        const portNodes = [...node.querySelectorAll('ports > port')];
+                        portNodes.forEach(p => p.remove());
+                        const portsNode = node.querySelector('ports') || d.createElement('ports');
+                        if (!node.querySelector('ports')) node.appendChild(portsNode);
+                        module.ports.forEach(portEntry => {
+                            const p = d.createElement('port');
+                            p.setAttribute('id', portEntry.id);
+                            p.setAttribute('label', portEntry.label);
+                            p.setAttribute('direction', portEntry.direction);
+                            p.setAttribute('default_active', String(portEntry.defaultActive));
+                            portsNode.appendChild(p);
+                        });
+                    }
+                });
+                return new XMLSerializer().serializeToString(d);
+            }
+
+            $('load').onclick = () => $('file').click();
+            $('file').onchange = e => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    try {
+                        S = parse(reader.result);
+                        selectedModule = '';
+                        selectedVoice = '';
+                        $('name').value = f.name;
+                        $('name').disabled = false;
+                        $('save').disabled = false;
+                        $('status').textContent = 'XML geladen: ' + f.name;
+                        sidebar();
+                        render();
+                    } catch (err) {
+                        console.error(err);
+                        toast(String(err && err.message ? err.message : err), true);
+                    }
+                };
+                reader.readAsText(f);
+            };
+
+            $('save').onclick = async () => {
+                let n = $('name').value.trim() || 'patch.xml';
+                if (!/\.xml$/i.test(n)) n += '.xml';
+                const data = exportXML();
+                try {
+                    if (window.claude && window.claude.use) {
+                        downloadCap ??= await window.claude.use('downloads');
+                        if (downloadCap) {
+                            await downloadCap.writeFile({ name: n, content: data, mime: 'application/xml' });
+                            toast('XML gespeichert.');
+                            return;
+                        }
+                    }
+                    const blob = new Blob([data], { type: 'application/xml;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url; a.download = n; a.click();
+                    setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    toast('XML exportiert.');
+                } catch (err) {
+                    toast('Export fehlgeschlagen.', true);
+                    console.error(err);
+                }
+            };
+        })();
+        </script>
     </body>
 </html>
