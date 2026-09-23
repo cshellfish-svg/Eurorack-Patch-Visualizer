@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Reale Modulliste aus dem ModularGrid-Rack "LIVE (small)" (Shellfish,
+  modulargrid.net/e/modules_racks/data_sheet/3033116), Stand 21.09.2026.
+
+  Status dieser Datei:
+    - Modulname (kurz, korrigiert) und Hersteller sind aus dem Rack Data
+      Sheet übernommen bzw. gekürzt. Die physische Reihe im Case wird
+      nicht erfasst — sie spielt für die Dokumentation keine Rolle.
+    - active="true" für alle: laut Datenblatt aktuell verbaut.
+    - function ist geprüft und korrigiert; row/label-Zuordnung in
+      <functions> gruppiert mehrere function-Ids auf dieselbe Diagramm-
+      Reihe (fx+process -> "Processing", env+mod -> "Modulation"); "ext"
+      (Reihe 8) ist als Kategorie angelegt, aber aktuell von keinem Modul
+      referenziert.
+    - voice ist für die 7 Oszillator-Module gesetzt (eine Stimme pro
+      Oszillator); weitere Module bekommen ihre Stimme erst, sobald die
+      realen Verbindungen bekannt sind.
+    - <ports> sind für alle 41 Module erfasst (A-180-8 MIDI Breakout wurde
+      entfernt, da ungenutzt). Bei einigen Boutique-/Nischenmodulen sind
+      die Ports nur mit Best-Effort-Sicherheit erfasst und einzeln als
+      "Hinweis" im jeweiligen Modul markiert.
+    - default_active ist inzwischen für alle 348 Ports explizit gesetzt
+      (kein Port mehr ohne das Attribut) — siehe Erklärung unten. Das
+      Attribut wird dabei auch bei direction="out"/"bidirectional" genutzt,
+      nicht nur bei "in" (z.B. Mix-/Summenausgänge, die ohnehin ohne
+      eigenes Patchkabel ein Signal führen).
+    - elementary (optionales Port-Attribut, Default = sichtbar) ist bisher
+      auf keinem Port gesetzt — noch kein Modul hat also ausgeblendete
+      Ports; das Ein-/Ausblenden über "[+]" im Tool steht aber bereit,
+      sobald einzelne Ports damit markiert werden.
+
+  Port-direction-Werte: in | out | bidirectional
+  (bidirectional = Richtung ist nicht fest, sondern ergibt sich erst aus
+  der Nutzung im Patch — typisch bei passiven/sequenziellen Schaltern wie
+  Sequential Switch v2, A-151v, A-182-2: 1-auf-N-Verteiler oder
+  N-auf-1-Multiplexer, je nachdem wie gepatcht wird. Bei einer
+  bidirectional-Verbindung <connection> entscheidet dann das jeweilige
+  Patch, welche Seite Quelle und welche Ziel ist.)
+
+  Weitere Port-Attribute:
+  - abbr: 2-3-Buchstaben-Kürzel für die Anzeige direkt am Modul im
+    Diagramm (z.B. "VOC" für V/Oct In, "GAT" für Gate In).
+  - default_active: "true", wenn der Port auch OHNE Patchkabel bereits
+    ein sinnvolles Signal führt bzw. verwendbar ist — bei Eingängen z.B.
+    weil intern normalisiert (auf eine feste Spannung oder auf einen
+    anderen Port desselben Moduls) oder weil das Modul bei fehlendem
+    Patch in ein sinnvolles Default-Verhalten fällt (z.B. Pico EG →
+    automatischer LFO-Modus ohne Gate); bei Ausgängen bzw. bidirektionalen
+    Ports z.B. weil sie ohnehin dauerhaft ein Signal führen (Summen-/
+    Mix-Ausgänge). Reduziert den Aufwand beim Aufbau eines Patches von
+    Null, weil nur noch die Abweichungen vom Default gepatcht werden
+    müssen. Wird im Tool als grüner Punkt markiert.
+  - default_note: kurze Erklärung des Default-Verhaltens (Freitext).
+    Bei jumperabhängigen Normalisierungen (z.B. A-140-2V) steht hier ein
+    Hinweis, dass die tatsächliche Normalisierung von der Jumper-Stellung
+    des eigenen Exemplars abhängt.
+  - elementary: "false" blendet einen Port im Tool standardmäßig aus
+    (z.B. Kanal 2-8 bei A-130-8, um die Modul-Box kompakt zu halten);
+    weggelassen bzw. "true" = Port ist immer sichtbar. Ausgeblendete
+    Ports lassen sich im Tool über "[+]" pro Modul einzeln einblenden;
+    ein Port mit aktiver Verbindung ist immer sichtbar, unabhängig von
+    diesem Attribut.
+
+  function-Werte: clock | source | process | fx | env | mod | utility | vca | output | ext
+  (utility = Strom/MIDI/Multiples u.ä., taucht im Diagramm typischerweise
+  nicht als eigener Signalpfad auf, aber als Modul im Case)
+  (fx = Delay/Ringmodulator/Frequency Shifter/Filter-artige Effektstrecke)
+  (env = Hüllkurvengeneratoren)
+  (ext = externe Ein-/Ausgänge, aktuell ungenutzt)
+
+  Stimmen: entsprechen den 7 Oszillator-Modulen (function="source").
+  Jeder Oszillator ist bereits mit seiner eigenen Stimme verknüpft;
+  weitere Module (Filter/EG/Mixer etc.) bekommen ihre Stimme erst,
+  sobald die realen Verbindungen bekannt sind.
+-->
+<patch title="LIVE (small)" hp="265">
+
+  <layers>
+    <layer id="audio" label="Audio"           color="#e0a83e"/>
+    <layer id="pitch" label="1V/Oct · Pitch"  color="#4f9fe0"/>
+    <layer id="gate"  label="Gate / Trigger"  color="#e0594f"/>
+    <layer id="mod"   label="Modulation"      color="#b385e0"/>
+    <layer id="clock" label="Clock / Sync"    color="#6fcf97"/>
+  </layers>
+
+  <voices>
+    <voice id="voice_themisto"     label="Themisto"/>
+    <voice id="voice_uplaits"      label="uPlaits"/>
+    <voice id="voice_paradox"      label="Paradox"/>
+    <voice id="voice_doc"          label="DOC"/>
+    <voice id="voice_ensembleosc"  label="Ensemble Oscillator"/>
+    <voice id="voice_foundation"   label="Foundation"/>
+    <voice id="voice_shapeshifter" label="Shapeshifter"/>
+  </voices>
+  <functions>
+    <!-- row = feste Position im Diagramm-Layout; mehrere function-Ids
+         können sich eine row + label teilen (z.B. fx+process -> "Processing",
+         env+mod -> "Modulation"). function wird pro Modul referenziert,
+         die Reihe selbst ergibt sich daraus (nicht separat am Modul gespeichert). -->
+    <function id="clock"   row="1" label="Clock/Sequencing"/>
+    <function id="source"  row="2" label="Sound Sources"/>
+    <function id="mod"     row="3" label="Modulation"/>
+    <function id="env"     row="3" label="Modulation"/>
+    <function id="utility" row="4" label="Utility"/>
+    <function id="process" row="5" label="Processing"/>
+    <function id="fx"      row="5" label="Processing"/>
+    <function id="vca"     row="6" label="VCA"/>
+    <function id="output"  row="7" label="Output"/>
+    <function id="ext"     row="8" label="EXT"/>
+  </functions>
+
+  <modules>
+    <module id="a138i"       name="A-138i"      manufacturer="Doepfer"          hp="6" function="output" active="true">
+      <ports>
+        <port id="input1" abbr="IN1" name="Input 1" direction="in" layer="audio" default_active="true" />
+        <port id="input2" abbr="IN2" name="Input 2" direction="in" layer="audio" default_active="true" />
+        <port id="input3" abbr="IN3" name="Input 3" direction="in" layer="audio" default_active="true" />
+        <port id="input4" abbr="IN4" name="Input 4" direction="in" layer="audio" default_active="true" />
+        <port id="single_out_a1" abbr="A1" name="Single Out A1" direction="out" layer="audio" default_active="false"/>
+        <port id="single_out_a2" abbr="A2" name="Single Out A2" direction="out" layer="audio" default_active="false"/>
+        <port id="single_out_a3" abbr="A3" name="Single Out A3" direction="out" layer="audio" default_active="false"/>
+        <port id="single_out_a4" abbr="A4" name="Single Out A4" direction="out" layer="audio" default_active="false"/>
+        <port id="single_out_b1" abbr="B1" name="Single Out B1" direction="out" layer="audio" default_active="true" />
+        <port id="single_out_b2" abbr="B2" name="Single Out B2" direction="out" layer="audio" default_active="false"/>
+        <port id="mix_out1" abbr="M1" name="Mix Out (Buchse 1)" direction="out" layer="audio" default_active="true" />
+        <port id="mix_out2" abbr="M2" name="Mix Out (Buchse 2)" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="dld"         name="Dual Looping Delay"             manufacturer="4ms Company"      hp="20" function="fx"      active="true">
+      <ports>
+        <port id="a_in" abbr="AIN"        name="Channel A In"        direction="in"  layer="audio" default_active="true" />
+        <port id="a_out" abbr="AOU"       name="Channel A Out"       direction="out" layer="audio" default_active="true" />
+        <port id="a_send" abbr="ASN"      name="Channel A Send"      direction="out" layer="audio" default_active="false"/>
+        <port id="a_return" abbr="ART"    name="Channel A Return"    direction="in"  layer="audio" default_active="false"/>
+        <port id="a_time_cv" abbr="ATC"   name="Channel A Time CV"   direction="in"  layer="mod" default_active="false"/>
+        <port id="a_level_cv" abbr="ALC"  name="Channel A Level CV"  direction="in"  layer="mod" default_active="false"/>
+        <port id="a_fb_cv" abbr="AFB"     name="Channel A Feedback CV" direction="in" layer="mod" default_active="false"/>
+        <port id="a_hold_in" abbr="AHL"   name="Channel A Inf.Hold Trig" direction="in" layer="gate" default_active="false"/>
+        <port id="a_rev_in" abbr="ARV"    name="Channel A Reverse Trig"  direction="in" layer="gate" default_active="false"/>
+        <port id="a_loop_clk" abbr="ALK"  name="Channel A Loop Clock Out" direction="out" layer="clock" default_active="false"/>
+        <port id="b_in" abbr="BIN"        name="Channel B In"        direction="in"  layer="audio" default_active="true" default_note="normalled von Channel A In (für Mono-Nutzung ohne Patchen von B) — genaue Normalisierungsrichtung im Manual nicht abschließend geprüft"/>
+        <port id="b_out" abbr="BOU"       name="Channel B Out"       direction="out" layer="audio" default_active="true" />
+        <port id="b_send" abbr="BSN"      name="Channel B Send"      direction="out" layer="audio" default_active="false"/>
+        <port id="b_return" abbr="BRT"    name="Channel B Return"    direction="in"  layer="audio" default_active="false"/>
+        <port id="b_time_cv" abbr="BTC"   name="Channel B Time CV"   direction="in"  layer="mod" default_active="false"/>
+        <port id="b_level_cv" abbr="BLC"  name="Channel B Level CV"  direction="in"  layer="mod" default_active="false"/>
+        <port id="b_fb_cv" abbr="BFB"     name="Channel B Feedback CV" direction="in" layer="mod" default_active="false"/>
+        <port id="b_hold_in" abbr="BHL"   name="Channel B Inf.Hold Trig" direction="in" layer="gate" default_active="false"/>
+        <port id="b_rev_in" abbr="BRV"    name="Channel B Reverse Trig"  direction="in" layer="gate" default_active="false"/>
+        <port id="b_loop_clk" abbr="BLK"  name="Channel B Loop Clock Out" direction="out" layer="clock" default_active="false"/>
+        <port id="ping_in" abbr="PNG"     name="Ping (Clock In)"     direction="in"  layer="clock" default_active="true" />
+        <port id="clk_out" abbr="CLK"     name="Clock Out"           direction="out" layer="clock" default_active="false"/>
+      </ports>
+    </module>
+    <module id="dplpg"       name="DPLPG"                  manufacturer="MengQiMusic"      hp="2" function="vca" active="true">
+      <ports>
+        <port id="a_in" abbr="AIN" name="Kanal A In" direction="in" layer="audio" default_active="true" />
+        <port id="a_cv_in" abbr="ACV" name="Kanal A Trigger/CV In" direction="in" layer="gate" default_active="true" />
+        <port id="a_out" abbr="AOU" name="Kanal A Out" direction="out" layer="audio" default_active="true" />
+        <port id="b_in" abbr="BIN" name="Kanal B In" direction="in" layer="audio" default_active="true" />
+        <port id="b_cv_in" abbr="BCV" name="Kanal B Trigger/CV In" direction="in" layer="gate" default_active="true" />
+        <port id="b_out" abbr="BOU" name="Kanal B Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+      <!-- Hinweis: Rein passiv, kein Strombedarf -->
+    </module>
+    <module id="a130-8"      name="A-130-8 Octal Linear VCA"       manufacturer="Doepfer"          hp="6" function="vca" active="true">
+      <ports>
+        <port id="cv_in1" abbr="CV1" name="VCA 1 CV In" direction="in" layer="mod" default_active="true" />
+        <port id="cv_in2" abbr="CV2" name="VCA 2 CV In" direction="in" layer="mod" default_active="true" />
+        <port id="cv_in3" abbr="CV3" name="VCA 3 CV In" direction="in" layer="mod" default_active="false"/>
+        <port id="cv_in4" abbr="CV4" name="VCA 4 CV In" direction="in" layer="mod" default_active="false"/>
+        <port id="cv_in5" abbr="CV5" name="VCA 5 CV In" direction="in" layer="mod" default_active="false"/>
+        <port id="cv_in6" abbr="CV6" name="VCA 6 CV In" direction="in" layer="mod" default_active="false"/>
+        <port id="cv_in7" abbr="CV7" name="VCA 7 CV In" direction="in" layer="mod" default_active="false"/>
+        <port id="cv_in8" abbr="CV8" name="VCA 8 CV In" direction="in" layer="mod" default_active="false"/>
+        <port id="sig_in1" abbr="IN1" name="VCA 1 Signal In" direction="in" layer="audio" default_active="true" />
+        <port id="sig_in2" abbr="IN2" name="VCA 2 Signal In" direction="in" layer="audio" default_active="true" />
+        <port id="sig_in3" abbr="IN3" name="VCA 3 Signal In" direction="in" layer="audio" default_active="false"/>
+        <port id="sig_in4" abbr="IN4" name="VCA 4 Signal In" direction="in" layer="audio" default_active="false"/>
+        <port id="sig_in5" abbr="IN5" name="VCA 5 Signal In" direction="in" layer="audio" default_active="false"/>
+        <port id="sig_in6" abbr="IN6" name="VCA 6 Signal In" direction="in" layer="audio" default_active="false"/>
+        <port id="sig_in7" abbr="IN7" name="VCA 7 Signal In" direction="in" layer="audio" default_active="false"/>
+        <port id="sig_in8" abbr="IN8" name="VCA 8 Signal In" direction="in" layer="audio" default_active="false"/>
+        <port id="sig_out1" abbr="O1" name="VCA 1 Out" direction="out" layer="audio" default_active="true" />
+        <port id="sig_out2" abbr="O2" name="VCA 2 Out" direction="out" layer="audio" default_active="true" />
+        <port id="sig_out3" abbr="O3" name="VCA 3 Out" direction="out" layer="audio" default_active="false"/>
+        <port id="sig_out4" abbr="O4" name="VCA 4 Out" direction="out" layer="audio" default_active="false"/>
+        <port id="sig_out5" abbr="O5" name="VCA 5 Out" direction="out" layer="audio" default_active="false"/>
+        <port id="sig_out6" abbr="O6" name="VCA 6 Out" direction="out" layer="audio" default_active="false"/>
+        <port id="sig_out7" abbr="O7" name="VCA 7 Out" direction="out" layer="audio" default_active="false"/>
+        <port id="sig_out8" abbr="O8" name="VCA 8 Out" direction="out" layer="audio" default_active="false"/>
+        <port id="mix_1_4" abbr="M14" name="Mix Out 1-4" direction="out" layer="audio" default_active="true" />
+        <port id="mix_5_8" abbr="M58" name="Mix Out 5-8" direction="out" layer="audio" default_active="true" />
+        <port id="mix_1_8" abbr="M18" name="Mix Out 1-8" direction="out" layer="audio" default_active="false"/>
+      </ports>
+      <!-- Hinweis: 27 Ports: 8x VCA (CV/In/Out) plus 3 Summenausgänge -->
+    </module>
+    <module id="attenumixer" name="Attenumixer"                    manufacturer="Złob"              hp="4" function="process" active="true">
+      <ports>
+        <port id="in1" abbr="IN1" name="Kanal I In" direction="in" layer="audio" default_active="true" />
+        <port id="in2" abbr="IN2" name="Kanal II In" direction="in" layer="audio" default_active="true" />
+        <port id="in3" abbr="IN3" name="Kanal III In" direction="in" layer="audio" default_active="true" />
+        <port id="out1" abbr="OU1" name="Kanal I Out" direction="out" layer="audio"  default_note="normalisiert auf Sum Out, solange nichts gepatcht ist" default_active="false"/>
+        <port id="out2" abbr="OU2" name="Kanal II Out" direction="out" layer="audio" default_note="normalisiert auf Sum Out, solange nichts gepatcht ist" default_active="false"/>
+        <port id="out3" abbr="OU3" name="Kanal III Out" direction="out" layer="audio" default_note="normalisiert auf Sum Out, solange nichts gepatcht ist" default_active="false"/>
+        <port id="sum_out" abbr="SUM" name="Sum Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="a151v"       name="A-151v"  manufacturer="Doepfer" hp="4" function="output" active="true">
+      <ports>
+        <port id="trig_in" abbr="TRG" name="Trigger In" direction="in" layer="gate" default_active="true" />
+        <port id="reset_in" abbr="RST" name="Reset In" direction="in" layer="gate" default_active="true" />
+        <port id="common" abbr="COM" name="Common O/I" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io1" abbr="IO1" name="I/O 1" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io2" abbr="IO2" name="I/O 2" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io3" abbr="IO3" name="I/O 3" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io4" abbr="IO4" name="I/O 4" direction="bidirectional" layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="themisto"    name="Themisto"                       manufacturer="IO Instruments"   hp="12" function="source"  voice="voice_themisto" active="true">
+      <ports>
+        <port id="vo_ct_in" abbr="VOC"   name="V/Oct In"        direction="in"  layer="pitch" default_active="true" />
+        <port id="vo_ct_thru" abbr="VOT" name="V/Oct Thru"       direction="out" layer="pitch" default_active="false"/>
+        <port id="lin_fm_in" abbr="LFM"  name="Lin FM In"        direction="in"  layer="mod" default_active="false"/>
+        <port id="exp_fm_in" abbr="EFM"  name="Exp FM In"        direction="in"  layer="mod" default_active="false"/>
+        <port id="pwm_in" abbr="PWM"     name="PWM CV In"        direction="in"  layer="mod" default_active="false"/>
+        <port id="sync_in" abbr="SYN"    name="Sync/Reset In"    direction="in"  layer="gate" default_active="false"/>
+        <port id="gate_thru" abbr="GTT"  name="Gate Thru"        direction="out" layer="gate" default_active="false"/>
+        <port id="sine_out" abbr="SIN"   name="Sine Out"         direction="out" layer="audio" default_active="true" />
+        <port id="tri_out" abbr="TRI"    name="Triangle Out"     direction="out" layer="audio" default_active="true" />
+        <port id="saw_out" abbr="SAW"    name="Saw Out"          direction="out" layer="audio" default_active="true" />
+        <port id="pulse_out" abbr="PUL"  name="Pulse Out"        direction="out" layer="audio" default_active="true" />
+        <port id="sub_out" abbr="SUB"    name="Sub Out"          direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="koszalin"    name="Koszalin" manufacturer="Xaoc Devices" hp="10" function="fx"      active="true">
+      <ports>
+        <port id="in_l" abbr="INL"       name="In L"             direction="in"  layer="audio" default_active="true" />
+        <port id="in_r" abbr="INR"       name="In R"             direction="in"  layer="audio" default_active="true" />
+        <port id="up_out_l" abbr="UPL"   name="Shift Up Out L"   direction="out" layer="audio" default_active="true" />
+        <port id="up_out_r" abbr="UPR"   name="Shift Up Out R"   direction="out" layer="audio" default_active="true" />
+        <port id="down_out_l" abbr="DNL" name="Shift Down Out L" direction="out" layer="audio" default_active="true" />
+        <port id="down_out_r" abbr="DNR" name="Shift Down Out R" direction="out" layer="audio" default_active="true" />
+        <port id="exp_fm_in" abbr="EFM"  name="Exp FM In"        direction="in"  layer="mod" default_active="true" />
+        <port id="lin_tzfm_in" abbr="TZF" name="Lin TZ FM In"    direction="in"  layer="mod" default_active="true" />
+        <port id="regen_cv_in" abbr="RCV" name="Regen CV In"     direction="in"  layer="mod" default_active="true" />
+        <port id="density_cv_in" abbr="DCV" name="Density CV In" direction="in"  layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="a182-2"      name="A-182-2"    manufacturer="Doepfer"          hp="4" function="output" active="true">
+      <ports>
+        <port id="g1_upper" abbr="1UP" name="Gruppe 1 Oben" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g2_upper" abbr="2UP" name="Gruppe 2 Oben" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g3_upper" abbr="3UP" name="Gruppe 3 Oben" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g4_upper" abbr="4UP" name="Gruppe 4 Oben" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g1_center" abbr="1CT" name="Gruppe 1 Mitte" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g2_center" abbr="2CT" name="Gruppe 2 Mitte" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g3_center" abbr="3CT" name="Gruppe 3 Mitte" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g4_center" abbr="4CT" name="Gruppe 4 Mitte" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g1_lower" abbr="1LO" name="Gruppe 1 Unten" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g2_lower" abbr="2LO" name="Gruppe 2 Unten" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g3_lower" abbr="3LO" name="Gruppe 3 Unten" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="g4_lower" abbr="4LO" name="Gruppe 4 Unten" direction="bidirectional" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: 4 unabhängige Umschalter, alle Buchsen bidirektional -->
+    </module>
+    <module id="skewfade"    name="Skew Fade"            manufacturer="Złob"              hp="3" function="mod"     active="true">
+      <ports>
+        <port id="skew_cv" abbr="SKW" name="Skew C.V." direction="in" layer="mod" default_active="false"/>
+        <port id="fade_cv" abbr="FCV" name="Fade C.V." direction="in" layer="mod" default_active="false"/>
+        <port id="tri_out" abbr="TRI" name="Triangle" direction="out" layer="mod" default_active="true" />
+        <port id="square_out" abbr="SQR" name="Square" direction="out" layer="mod" default_active="true" />
+        <port id="fade_out" abbr="FDO" name="Fade Out" direction="out" layer="mod" default_active="false"/>
+      </ports>
+    </module>
+    <module id="kinks"       name="Kinks"          manufacturer="Sylph Modular"     hp="4" function="mod"     active="true">
+      <ports>
+        <port id="rect_in" abbr="RIN" name="Rectifier Signal In" direction="in" layer="mod" default_active="true" />
+        <port id="rect_inv_out" abbr="INV" name="Inverted Out" direction="out" layer="mod" default_active="true" />
+        <port id="rect_hw_out" abbr="HWR" name="Half-Wave Rectified Out" direction="out" layer="mod" default_active="true" />
+        <port id="rect_fw_out" abbr="FWR" name="Full-Wave Rectified Out" direction="out" layer="mod" default_active="true" />
+        <port id="logic_in1" abbr="LG1" name="Logic Signal In 1" direction="in" layer="mod" default_active="true" />
+        <port id="logic_in2" abbr="LG2" name="Logic Signal In 2" direction="in" layer="mod" default_active="true" />
+        <port id="logic_or_out" abbr="OR" name="Analog OR Out" direction="out" layer="mod" default_active="true" />
+        <port id="logic_and_out" abbr="AND" name="Analog AND Out" direction="out" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: Aus dem offiziellen Mutable Instruments Kinks Quickstart-Manual -->
+    </module>
+    <module id="clockopawn"  name="Clock O'Pawn"              manufacturer="Shakmat"          hp="6" function="clock"   active="true">
+      <ports>
+        <port id="midi_in" abbr="MID" name="MIDI In (TRS)" direction="in" layer="clock" default_active="false" />
+        <port id="reset_out" abbr="RST" name="Reset Out" direction="out" layer="gate" default_active="true"  />
+        <port id="clock_out" abbr="CLK" name="Clock Out" direction="out" layer="clock" default_active="true" />
+        <port id="accent_out" abbr="ACC" name="Accent Out" direction="out" layer="gate" default_active="true" />
+        <port id="sixteenth_out" abbr="16T" name="16th Out" direction="out" layer="clock" default_active="true" />
+      </ports>
+    </module>
+    <module id="uplaits"     name="uPlaits (black)"                manufacturer="CalSynth"         hp="8" function="source"  voice="voice_uplaits" active="true">
+      <ports>
+        <port id="vo_ct_in" abbr="VOC" name="V/Oct In" direction="in" layer="pitch" default_active="true" />
+        <port id="fm_in" abbr="FM" name="FM In" direction="in" layer="mod" default_active="true" />
+        <port id="trig_in" abbr="TRG" name="Trigger In" direction="in" layer="gate" default_active="true" />
+        <port id="timbre_cv_in" abbr="TIM" name="Timbre CV In" direction="in" layer="mod" default_active="true" />
+        <port id="morph_cv_in" abbr="MOR" name="Morph CV In" direction="in" layer="mod" default_active="true" />
+        <port id="level_cv_in" abbr="LEV" name="Level/Harmonics CV In" direction="in" layer="mod" default_active="true" />
+        <port id="out" abbr="OUT" name="Main Out" direction="out" layer="audio" default_active="true" />
+        <port id="aux_out" abbr="AUX" name="Aux Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="a140-2v"     name="A-140-2V"        manufacturer="Doepfer"          hp="8" function="env"     active="true">
+      <ports>
+        <port id="a_gate_in" abbr="AGT"  name="ADSR A Gate In"      direction="in"  layer="gate" default_active="true" />
+        <port id="a_retrig_in" abbr="ARG" name="ADSR A Retrigger In" direction="in" layer="gate" default_active="false"/>
+        <port id="a_cvt_in" abbr="ACV"   name="ADSR A CVT In"       direction="in"  layer="mod" default_active="true" default_note="per internem Jumper wahlweise auf feste interne Spannung normalisiert — abhängig von Jumper-Stellung deines Exemplars"/>
+        <port id="a_out1" abbr="AO1"     name="ADSR A Out 1"        direction="out" layer="mod" default_active="true" />
+        <port id="a_out2" abbr="AO2"     name="ADSR A Out 2"        direction="out" layer="mod" default_active="true" />
+        <port id="b_gate_in" abbr="BGT"  name="ADSR B Gate In"      direction="in"  layer="gate" default_active="true" default_note="per internem Jumper wahlweise auf Gate A normalisiert (ADSR B triggert dann mit ADSR A mit) — abhängig von Jumper-Stellung deines Exemplars"/>
+        <port id="b_retrig_in" abbr="BRG" name="ADSR B Retrigger In" direction="in" layer="gate" default_active="false"/>
+        <port id="b_cvt_in" abbr="BCV"   name="ADSR B CVT In"       direction="in"  layer="mod" default_active="true" default_note="per internem Jumper wahlweise auf feste interne Spannung normalisiert — abhängig von Jumper-Stellung deines Exemplars"/>
+        <port id="b_out1" abbr="BO1"     name="ADSR B Out 1"        direction="out" layer="mod" default_active="true" />
+        <port id="b_out2" abbr="BO2"     name="ADSR B Out 2"        direction="out" layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="percif"      name="Percussion Interface"           manufacturer="4ms Company"      hp="4" function="mod"     active="true">
+      <ports>
+        <port id="in" abbr="IN" name="Audio In (3.5mm)" direction="in" layer="audio" default_active="true" />
+        <port id="gate_out" abbr="GAT" name="Gate Out" direction="out" layer="gate" default_active="true" />
+        <port id="env_out" abbr="ENV" name="Envelope Out (+)" direction="out" layer="mod" default_active="true" />
+        <port id="inv_out" abbr="INV" name="Inverted Envelope Out (-)" direction="out" layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="a138f_1"     name="A-138f" manufacturer="Doepfer"        hp="4" function="output" active="true">
+      <ports>
+        <port id="in_a" abbr="INA" name="In A" direction="in" layer="audio" default_active="true" />
+        <port id="in_b" abbr="INB" name="In B" direction="in" layer="audio" default_active="true" />
+        <port id="in_c" abbr="INC" name="In C" direction="in" layer="audio" default_active="true" />
+        <port id="out1" abbr="OU1" name="Kanal 1 Out" direction="out" layer="audio" default_active="true" />
+        <port id="in_a2" abbr="IA2" name="In A (Kanal 2)" direction="in" layer="audio" default_active="true" />
+        <port id="in_b2" abbr="IB2" name="In B (Kanal 2)" direction="in" layer="audio" default_active="true" />
+        <port id="in_c2" abbr="IC2" name="In C (Kanal 2)" direction="in" layer="audio" default_active="true" />
+        <port id="out2" abbr="OU2" name="Kanal 2 Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="a189-1"      name="A-189-1 VC"        manufacturer="Doepfer"          hp="8" function="fx"      active="true">
+      <ports>
+        <port id="signal_in" abbr="SIG"  name="Signal In"        direction="in"  layer="audio" default_active="true" />
+        <port id="signal_out" abbr="SGO" name="Signal Out"        direction="out" layer="audio" default_active="true" />
+        <port id="bc_cv_in" abbr="BC"   name="BC CV In"          direction="in"  layer="mod" default_active="true" />
+        <port id="sr_cv_in" abbr="SR"   name="SR CV In"          direction="in"  layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="vcslew"      name="VC Slew Limiter"                manufacturer="Befaco"           hp="6" function="process" active="true">
+      <ports>
+        <port id="in" abbr="IN" name="Signal In" direction="in" layer="mod" default_active="true" />
+        <port id="rise_cv_in" abbr="RCV" name="Rise CV In" direction="in" layer="mod" default_active="true" />
+        <port id="fall_cv_in" abbr="FCV" name="Fall CV In" direction="in" layer="mod" default_active="true" />
+        <port id="out" abbr="OUT" name="Out" direction="out" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: Bezieht sich auf die ältere 6HP-Version 'Befaco Slew Limiter (AKA Lag Processor)', nicht das neuere 4HP 'Befaco Slew' -->
+    </module>
+    <module id="feg"         name="FEG"      manufacturer="Rides in the Storm" hp="4" function="env"     active="true">
+      <ports>
+        <port id="trig_in" abbr="TRG"    name="Trigger/Gate In"     direction="in"  layer="gate" default_active="true" />
+        <port id="time_cv_in" abbr="TCV" name="Fast/Slow CV In"     direction="in"  layer="mod" default_active="true" />
+        <port id="out" abbr="OUT"        name="Out"                 direction="out" layer="mod" default_active="true" />
+        <port id="out_inv" abbr="INV"    name="Out Inverted"        direction="out" layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="a180-2mult"  name="A-180-2" manufacturer="Doepfer"         hp="2" function="utility" active="true">
+      <ports>
+        <port id="busA0" abbr="A0" name="Bus A Buchse 1" direction="in" layer="mod" default_active="true" />
+        <port id="busA1" abbr="A1" name="Bus A Buchse 1" direction="out" layer="mod" default_active="true" />
+        <port id="busA2" abbr="A2" name="Bus A Buchse 2" direction="out" layer="mod" default_active="true" />
+        <port id="busA3" abbr="A3" name="Bus A Buchse 3" direction="out" layer="mod" default_active="true" />
+        <port id="busB0" abbr="B0" name="Bus B Buchse 1" direction="in" layer="mod" default_active="true" />
+        <port id="busB1" abbr="B1" name="Bus B Buchse 1" direction="out" layer="mod" default_active="true" />
+        <port id="busB2" abbr="B2" name="Bus B Buchse 2" direction="out" layer="mod" default_active="true" />
+        <port id="busB3" abbr="B3" name="Bus B Buchse 3" direction="out" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: Passiver Multiple - alle Buchsen intern verbunden und bidirektional (eine als Eingang, Rest als Ausgänge, oder umgekehrt); exakte Buchsenzahl (2hp) nicht abschließend verifiziert -->
+    </module>
+    <module id="a134-2"      name="A-134-2 Dual VC Crossfader"     manufacturer="Doepfer"          hp="4" function="process" active="true">
+      <ports>
+        <port id="in_1a" abbr="1A" name="In 1A" direction="in" layer="audio" default_active="true" />
+        <port id="in_1b" abbr="1B" name="In 1B" direction="in" layer="audio" default_active="true" />
+        <port id="cv_1" abbr="CV1" name="CV 1" direction="in" layer="mod" default_active="true" />
+        <port id="in_2a" abbr="2A" name="In 2A" direction="in" layer="audio" default_active="true" />
+        <port id="in_2b" abbr="2B" name="In 2B" direction="in" layer="audio" default_active="true" />
+        <port id="cv_2" abbr="CV2" name="CV 2" direction="in" layer="mod" default_active="true" />
+        <port id="out_1" abbr="OU1" name="Out 1" direction="out" layer="audio" default_active="true" />
+        <port id="out_2" abbr="OU2" name="Out 2" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="diodechaos"  name="Diode Chaos"                    manufacturer="Złob"              hp="3" function="mod"     active="true">
+      <ports>
+        <port id="x_out" abbr="X" name="X Out" direction="out" layer="mod" default_active="true" />
+        <port id="y_out" abbr="Y" name="Y Out" direction="out" layer="mod" default_active="true" />
+        <port id="z_out" abbr="Z" name="Z Out" direction="out" layer="mod" default_active="true" />
+        <port id="trigger_out" abbr="TRG" name="Trigger Out" direction="out" layer="gate" default_active="false"/>
+      </ports>
+    </module>
+    <module id="neotrinity"  name="Neo Trinity"     manufacturer="Bastl Instruments" hp="8" function="mod"     active="true">
+      <ports>
+        <port id="meta_in" abbr="MET" name="Meta" direction="in" layer="mod" default_active="true" />
+        <port id="in_e" abbr="INE" name="In E" direction="in" layer="mod" default_active="true" />
+        <port id="in_f" abbr="INF" name="In F" direction="in" layer="mod" default_active="true" />
+        <port id="out_a" abbr="OUA" name="Out A" direction="out" layer="mod" default_active="true" />
+        <port id="out_b" abbr="OUB" name="Out B" direction="out" layer="mod" default_active="true" />
+        <port id="out_c" abbr="OUC" name="Out C" direction="out" layer="mod" default_active="true" />
+        <port id="out_d" abbr="OUD" name="Out D" direction="out" layer="mod" default_active="true" />
+        <port id="out_e" abbr="OUE" name="Out E" direction="out" layer="mod" default_active="true" />
+        <port id="out_f" abbr="OUF" name="Out F" direction="out" layer="mod" default_active="true" />
+      </ports>
+    </module>
+    <module id="picoeg"      name="Pico EG"                        manufacturer="Erica Synths"     hp="3" function="env"     active="true">
+      <ports>
+        <port id="gate_in" abbr="GAT"    name="Gate In"             direction="in"  layer="gate" default_active="true" default_note="unbelegt: Modul läuft automatisch als LFO (-5V..+5V) statt als Hüllkurve"/>
+        <port id="out" abbr="OUT"        name="Out"                 direction="out" layer="mod"  default_active="true" />
+      </ports>
+      <!-- Hinweis: ohne gepatchtes Gate schaltet das Modul automatisch in den LFO-Modus (-5V..+5V) -->
+    </module>
+    <module id="empulatrix"  name="Sinclastic Empulatrix"          manufacturer="Noise Engineering" hp="4" function="env"     active="true">
+      <ports>
+        <port id="gate_in" abbr="GAT"    name="Gate In"             direction="in"  layer="gate" default_active="true" />
+        <port id="clamp_in" abbr="CIN"   name="Clamp In (Audio/CV)" direction="in"  layer="audio" default_active="true" />
+        <port id="clamp_out" abbr="COU"  name="Clamp Out (Audio/CV)" direction="out" layer="audio" default_active="true" />
+        <port id="env_out" abbr="ENV"    name="Envelope Out"        direction="out" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: Clamp In/Out ist DC-gekoppelt (Audio oder CV); Gate steuert sowohl Timing als auch Envelope-Amplitude -->
+    </module>
+    <module id="clockdiv"    name="Rotating Clock Divider v2"      manufacturer="4ms Company"      hp="4" function="clock"   active="true">
+      <ports>
+        <port id="clk_in" abbr="CLI" name="Clock" direction="in" layer="clock" default_active="true" />
+        <port id="cv_rotate" abbr="ROT" name="CV Rotate" direction="in" layer="mod" default_active="false"/>
+        <port id="cv_reset" abbr="RST" name="CV Reset" direction="in" layer="gate" default_active="true" />
+        <port id="div1" abbr="D1" name="Div 1" direction="out" layer="clock" default_active="true" />
+        <port id="div2" abbr="D2" name="Div 2" direction="out" layer="clock" default_active="true" />
+        <port id="div3" abbr="D3" name="Div 3" direction="out" layer="clock" default_active="true" />
+        <port id="div4" abbr="D4" name="Div 4" direction="out" layer="clock" default_active="true" />
+        <port id="div5" abbr="D5" name="Div 5" direction="out" layer="clock" default_active="true" />
+        <port id="div6" abbr="D6" name="Div 6" direction="out" layer="clock" default_active="true" />
+        <port id="div7" abbr="D7" name="Div 7" direction="out" layer="clock" default_active="true" />
+        <port id="div8" abbr="D8" name="Div 8" direction="out" layer="clock" default_active="true" />
+      </ports>
+    </module>
+    <module id="paradox"     name="Paradox Dual Intermod. VCO"     manufacturer="Noise Reap"       hp="8" function="source"  voice="voice_paradox" active="true">
+      <ports>
+        <port id="vco1_voct" abbr="V1V" name="VCO1 1V/Oct" direction="in" layer="pitch" default_active="true" />
+        <port id="ext_fm" abbr="EFM" name="Ext FM" direction="in" layer="mod" default_active="true" />
+        <port id="vco2_voct" abbr="V2V" name="VCO2 1V/Oct" direction="in" layer="pitch" default_active="true" />
+        <port id="pwm" abbr="PWM" name="PWM" direction="in" layer="mod" default_active="true" />
+        <port id="linked_voct" abbr="LKV" name="Linked 1V/Oct" direction="in" layer="pitch" default_active="true" />
+        <port id="vco1_tri_out" abbr="1TR" name="VCO1 Tri Out" direction="out" layer="audio" default_active="true" />
+        <port id="vco1_saw_out" abbr="1SW" name="VCO1 Saw Out" direction="out" layer="audio" default_active="true" />
+        <port id="vco1_pulse_out" abbr="1PL" name="VCO1 Pulse Out" direction="out" layer="audio" default_active="true" />
+        <port id="vco2_sq_out" abbr="2SQ" name="VCO2 Square Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="percifexp"   name="Percussion Interface Expander"  manufacturer="4ms Company"      hp="4" function="mod"     active="true">
+      <ports>
+        <port id="ext_in" abbr="EIN" name="Audio In (6.35mm)" direction="in" layer="audio" default_active="true" />
+        <port id="audio_out" abbr="AOU" name="Audio Out (Modularpegel)" direction="out" layer="audio" default_active="true" />
+        <port id="env_level_out" abbr="ENL" name="Envelope Out (attenuiert)" direction="out" layer="mod" default_active="true" />
+        <port id="inv_level_out" abbr="INL" name="Inverted Envelope Out (attenuiert)" direction="out" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: Erweitert das Hauptmodul percif, braucht kein eigenes Power -->
+    </module>
+    <module id="seqswitch2"  name="Sequential Switch v2"     manufacturer="Erica Synths"     hp="10" function="output" active="true">
+      <ports>
+        <port id="io1" abbr="IO1" name="In/Out 1" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io2" abbr="IO2" name="In/Out 2" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io3" abbr="IO3" name="In/Out 3" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io4" abbr="IO4" name="In/Out 4" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io5" abbr="IO5" name="In/Out 5" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io6" abbr="IO6" name="In/Out 6" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io7" abbr="IO7" name="In/Out 7" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="io8" abbr="IO8" name="In/Out 8" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="clock_in" abbr="CLK" name="Clock" direction="in" layer="clock" default_active="true" />
+        <port id="reset_in" abbr="RST" name="Reset" direction="in" layer="gate" default_active="true" />
+        <port id="common_io" abbr="COM" name="In/Out I/O (Common)" direction="bidirectional" layer="mod" default_active="true" />
+        <port id="gate_out" abbr="GAT" name="Gate Out" direction="out" layer="gate" default_active="true" />
+      </ports>
+      <!-- Hinweis: Kanäle 1-8 und die Hauptbuchse I/O arbeiten bidirektional als 8-zu-1 oder 1-zu-8 -->
+    </module>
+    <module id="stmix"       name="STMIX" manufacturer="Befaco"          hp="6" function="output" active="true">
+      <ports>
+        <port id="ch1_l" abbr="1L" name="Ch1 L" direction="in" layer="audio" default_active="true" />
+        <port id="ch1_r" abbr="1R" name="Ch1 R" direction="in" layer="audio" default_active="true" />
+        <port id="ch2_l" abbr="2L" name="Ch2 L" direction="in" layer="audio" default_active="true" />
+        <port id="ch2_r" abbr="2R" name="Ch2 R" direction="in" layer="audio" default_active="true" />
+        <port id="ch3_l" abbr="3L" name="Ch3 L" direction="in" layer="audio" default_active="true" />
+        <port id="ch3_r" abbr="3R" name="Ch3 R" direction="in" layer="audio" default_active="true" />
+        <port id="ch4_l" abbr="4L" name="Ch4 L" direction="in" layer="audio" default_active="true" />
+        <port id="ch4_r" abbr="4R" name="Ch4 R" direction="in" layer="audio" default_active="true" />
+        <port id="aux_l" abbr="AXL" name="Aux L" direction="in" layer="audio" default_active="false"/>
+        <port id="aux_r" abbr="AXR" name="Aux R" direction="in" layer="audio" default_active="false"/>
+        <port id="out_l" abbr="OUL" name="Out L" direction="out" layer="audio" default_active="true" />
+        <port id="out_r" abbr="OUR" name="Out R" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="doc"         name="DOC"               manufacturer="Rides in the Storm" hp="6" function="source"  voice="voice_doc" active="true">
+      <ports>
+        <port id="vo_ct_in" abbr="VOC" name="1V/Oct" direction="in" layer="pitch" default_active="true" />
+        <port id="reset_in" abbr="RST" name="Reset" direction="in" layer="gate" default_active="false"/>
+        <port id="pwm" abbr="PWM" name="PWM" direction="in" layer="mod" default_active="false"/>
+        <port id="lin_fm" abbr="LFM" name="Linear FM" direction="in" layer="mod" default_active="false"/>
+        <port id="exp_fm" abbr="EFM" name="Exponential FM" direction="in" layer="mod" default_active="false"/>
+        <port id="saw_out" abbr="SAW" name="Saw Out" direction="out" layer="audio" default_active="true" />
+        <port id="pulse_out" abbr="PUL" name="Pulse Out" direction="out" layer="audio" default_active="true" />
+        <port id="tri_out" abbr="TRI" name="Triangle Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="a138f_2"     name="A-138f" manufacturer="Doepfer"        hp="4" function="output" active="true">
+      <ports>
+        <port id="in_a" abbr="INA" name="In A" direction="in" layer="audio" default_active="true" />
+        <port id="in_b" abbr="INB" name="In B" direction="in" layer="audio" default_active="true" />
+        <port id="in_c" abbr="INC" name="In C" direction="in" layer="audio" default_active="true" />
+        <port id="out1" abbr="OU1" name="Kanal 1 Out" direction="out" layer="audio" default_active="true" />
+        <port id="in_a2" abbr="IA2" name="In A (Kanal 2)" direction="in" layer="audio" default_active="true" />
+        <port id="in_b2" abbr="IB2" name="In B (Kanal 2)" direction="in" layer="audio" default_active="true" />
+        <port id="in_c2" abbr="IC2" name="In C (Kanal 2)" direction="in" layer="audio" default_active="true" />
+        <port id="out2" abbr="OU2" name="Kanal 2 Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="ensembleosc" name="Ensemble Oscillator"            manufacturer="4ms Company"      hp="16" function="source"  voice="voice_ensembleosc" active="true">
+      <ports>
+        <port id="vo_ct_in" abbr="VOC" name="1V/Oct" direction="in" layer="pitch" default_active="true" />
+        <port id="wrath" abbr="WRA" name="Wrath" direction="in" layer="mod" default_active="false"/>
+        <port id="size" abbr="SIZ" name="Size" direction="in" layer="mod" default_active="true" />
+        <port id="chord" abbr="CHD" name="Chord" direction="in" layer="mod" default_active="false"/>
+        <port id="scale" abbr="SCL" name="Scale" direction="in" layer="mod" default_active="true" />
+        <port id="balance" abbr="BAL" name="Balance" direction="in" layer="mod" default_active="false"/>
+        <port id="phase" abbr="PHS" name="Phase" direction="in" layer="mod" default_active="false"/>
+        <port id="twist" abbr="TWS" name="Twist" direction="in" layer="mod" default_active="false"/>
+        <port id="warp" abbr="WRP" name="Warp" direction="in" layer="mod" default_active="false"/>
+        <port id="out_l" abbr="OUL" name="Out L" direction="out" layer="audio" default_active="true" />
+        <port id="out_r" abbr="OUR" name="Out R" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="foundation"  name="Foundation" manufacturer="Noise Reap"  hp="10" function="source"  voice="voice_foundation" active="true">
+      <ports>
+        <port id="trigger" abbr="TRG" name="Trigger" direction="in" layer="gate" default_active="true" />
+        <port id="accent" abbr="ACC" name="Accent" direction="in" layer="mod" default_active="true" />
+        <port id="vo_ct_in" abbr="VOC" name="1V/Oct" direction="in" layer="pitch" default_active="true" />
+        <port id="nudge" abbr="NDG" name="Nudge" direction="in" layer="mod" default_active="true" />
+        <port id="ring" abbr="RNG" name="Ring" direction="in" layer="mod" default_active="true" />
+        <port id="texture" abbr="TXT" name="Texture" direction="in" layer="mod" default_active="true" />
+        <port id="decay" abbr="DEC" name="Decay" direction="in" layer="mod" default_active="true" />
+        <port id="out" abbr="OUT" name="Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="xdr"         name="xdr"              manufacturer="Rides in the Storm" hp="4" function="fx"      active="true">
+      <ports>
+        <port id="x_in" abbr="X"       name="X In"              direction="in"  layer="audio" default_active="true" />
+        <port id="y_in" abbr="Y"       name="Y In"              direction="in"  layer="audio" default_active="true" />
+        <port id="mix_cv_in" abbr="MCV"  name="Mix CV In"          direction="in"  layer="mod" default_active="false"/>
+        <port id="hpf_cv_in" abbr="HCV"  name="HP Filter CV In"    direction="in"  layer="mod" default_active="false"/>
+        <port id="hpf_ext_in" abbr="HPI" name="HP Filter Ext. In"  direction="in"  layer="audio" default_active="false"/> 
+        <port id="hpf_ext_out" abbr="HPO" name="HP Filter Ext. Out"  direction="out"  layer="audio" default_active="false"/>
+        <port id="mix_out" abbr="MIX"    name="Mix Out"            direction="out" layer="audio" default_active="true" />
+        <port id="xor_out" abbr="XOR"    name="XOR Out"            direction="out" layer="audio" default_active="false"/>
+        <port id="diode_out" abbr="DIO"  name="Diode Out"          direction="out" layer="audio" default_active="false"/>
+        <port id="noise_out" abbr="NOI"  name="Noise Out"          direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="tausenddb"   name="Tausend dB"   manufacturer="Making Sound Machines" hp="6" function="process" active="true">
+      <ports>
+        <port id="in1" abbr="IN1" name="In 1" direction="in" layer="audio" default_active="true" />
+        <port id="in2" abbr="IN2" name="In 2" direction="in" layer="audio" default_active="true" />
+        <port id="in3" abbr="IN3" name="In 3" direction="in" layer="audio" default_active="true" />
+        <port id="in4" abbr="IN4" name="In 4" direction="in" layer="audio" default_active="true" />
+        <port id="out1" abbr="OU1" name="Out 1" direction="out" layer="audio" default_active="true" />
+        <port id="out2" abbr="OU2" name="Out 2" direction="out" layer="audio" default_active="true" />
+        <port id="out3" abbr="OU3" name="Out 3" direction="out" layer="audio" default_active="true" />
+        <port id="out4" abbr="OU4" name="Out 4" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="dualab"      name="DUAL A/B"                       manufacturer="MH Eurorack"      hp="2" function="utility" active="true">
+      <ports>
+        <port id="in_a1" abbr="IA1" name="In A1" direction="in" layer="mod" default_active="true" />
+        <port id="in_b1" abbr="IB1" name="In B1" direction="in" layer="mod" default_active="true" />
+        <port id="in_a2" abbr="IA2" name="In A2" direction="in" layer="mod" default_active="true" />
+        <port id="in_b2" abbr="IB2" name="In B2" direction="in" layer="mod" default_active="true" />
+        <port id="out1" abbr="OU1" name="Out 1" direction="out" layer="mod" default_active="true" />
+        <port id="out2" abbr="OU2" name="Out 2" direction="out" layer="mod" default_active="true" />
+      </ports>
+      <!-- Hinweis: Kann passiv auch umgekehrt als 2 Eingänge (Out1/Out2) und 4 Ausgänge (In A1/B1/A2/B2) genutzt werden -->
+    </module>
+    <module id="shapeshifter" name="Shapeshifter Dual Complex Wavetable VCO" manufacturer="Intellijel" hp="26" function="source" voice="voice_shapeshifter" active="true">
+      <ports>
+        <port id="pitch2_ratio" abbr="P2R" name="Pitch 2 / Ratio" direction="in" layer="pitch" default_active="false"/>
+        <port id="int_fm" abbr="IFM" name="Int. FM" direction="in" layer="mod" default_active="true" />
+        <port id="fm1" abbr="FM1" name="FM 1" direction="in" layer="mod" default_active="false"/>
+        <port id="shape1" abbr="SH1" name="Shape 1" direction="in" layer="mod" default_active="true" />
+        <port id="shape2" abbr="SH2" name="Shape 2" direction="in" layer="mod" default_active="true" />
+        <port id="tilt" abbr="TLT" name="Tilt" direction="in" layer="mod" default_active="false"/>
+        <port id="mod_a" abbr="MDA" name="Mod A" direction="in" layer="mod" default_active="true" />
+        <port id="mod_b" abbr="MDB" name="Mod B" direction="in" layer="mod" default_active="true" />
+        <port id="pitch1" abbr="PIT1" name="Pitch 1" direction="in" layer="pitch" default_active="false"/>
+        <port id="sync" abbr="SYN" name="Sync" direction="in" layer="gate" default_active="false"/>
+        <port id="fold_in" abbr="FLDI" name="Fold In" direction="in" layer="mod" default_active="false"/>
+        <port id="out1" abbr="OU1" name="Out 1" direction="out" layer="audio" default_active="true" />
+        <port id="out2" abbr="OU2" name="Out 2" direction="out" layer="audio" default_active="true" />
+        <port id="pulse_out" abbr="PLS" name="Pulse Out" direction="out" layer="gate" default_active="true" />
+        <port id="fold_out" abbr="FLDO" name="Fold Out" direction="out" layer="audio" default_active="true" />
+      </ports>
+    </module>
+    <module id="a119v"       name="A-119v External Input / Env. Follower" manufacturer="Doepfer"   hp="8" function="process" active="true">
+      <ports>
+        <port id="in1_asym" abbr="I1A" name="In 1 ASYM" direction="in" layer="audio" default_active="true" />
+        <port id="in2_sym" abbr="I2S" name="In 2 SYM" direction="in" layer="audio" default_active="true" />
+        <port id="out1" abbr="OU1" name="Out 1" direction="out" layer="audio" default_active="true" />
+        <port id="out2" abbr="OU2" name="Out 2" direction="out" layer="audio" default_active="true" />
+        <port id="env" abbr="ENV" name="Env Out" direction="out" layer="mod" default_active="true" />
+        <port id="gate" abbr="GAT" name="Gate Out" direction="out" layer="gate" default_active="true" />
+      </ports>
+    </module>
+
+    <module id="anomaly"     name="Anomaly"                        manufacturer="Noise Reap"       function="fx"      active="true">
+      <ports>
+        <port id="audio_in"    abbr="IN"  name="Audio In"         direction="in"  layer="audio" default_active="true" />
+        <port id="cutoff_cv_in" abbr="CUT" name="Cutoff CV In"    direction="in"  layer="mod" default_active="true" />
+        <port id="fold_cv_in"  abbr="FLD" name="Fold CV In"       direction="in"  layer="mod" default_active="true" />
+        <port id="out"         abbr="OUT" name="Out"              direction="out" layer="audio" default_active="true" />
+      </ports>
+      <!-- Hinweis: Anomaly ist ein VCF kombiniert mit einem "broken wavefolder" (Herstellerbeschreibung);
+           kein offizielles Manual gefunden, Portliste ein plausibler Minimalsatz - bitte am Modul prüfen -->
+    </module>
+
+    <module id="wk7"         name="WK7"                            manufacturer="LPZW.modules"     function="vca"     active="true">
+      <ports>
+        <port id="in1"  abbr="IN1" name="In 1"  direction="in"  layer="audio" default_active="true" default_note="normalisiert von In 1 auf In 2, falls dort nichts gepatcht ist"/>
+        <port id="in2"  abbr="IN2" name="In 2"  direction="in"  layer="audio" default_active="true" default_note="normalisiert von In 1, falls unbelegt"/>
+        <port id="cv1_in" abbr="CV1" name="CV 1 In" direction="in" layer="mod" default_active="true" default_note="ohne Patch normalisiert auf feste 5V (VCA per Attenuator-Regler steuerbar)"/>
+        <port id="cv2_in" abbr="CV2" name="CV 2 In" direction="in" layer="mod" default_active="true" default_note="normalisiert auf invertiertes CV1 (für Crossfading zwischen VCA1/VCA2)"/>
+        <port id="out1" abbr="OU1" name="Out 1" direction="out" layer="audio" default_active="true" />
+        <port id="out2" abbr="OU2" name="Out 2" direction="out" layer="audio" default_active="true" default_note="Out 1 wird automatisch auf Out 2 gemischt/summiert"/>
+      </ports>
+    </module>
+
+  </modules>
+
+  <connections>
+    <!-- TODO: Verbindungen ergänzen, sobald reale Patches erfasst sind -->
+  </connections>
+
+</patch>
