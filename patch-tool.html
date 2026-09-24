@@ -1,925 +1,2203 @@
 <!doctype html>
-<html lang="de">    
-    <head>        
-        <meta charset="utf-8">        
-        <meta name="viewport" content="width=device-width,initial-scale=1">        
-        <title>Patch Tool — Signal-Layer &amp; Verbindungen         
-        </title>        
-        <link rel="preconnect" href="https://fonts.googleapis.com">        
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>        
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">        
-        <style>:root{--bg:#17181b;--panel:#1e2024;--border:#2d3035;--strong:#3a3e45;--text:#e9e7e1;--dim:#8b8d93;--faint:#55585f;--rail:#0f1012;--ok:#6fcf97;--blue:#4f9fe0;--danger:#e0594f}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font:14px Inter,system-ui,sans-serif;user-select:none}header{padding:16px clamp(12px,3vw,32px) 12px;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}h1{margin:0;font-size:16px}.filebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.btn{background:var(--panel);border:1px solid var(--strong);color:var(--text);font:600 12.5px Inter;padding:7px 12px;border-radius:4px;cursor:pointer}.btn:hover{background:#23262b}.btn:disabled{opacity:.4;cursor:not-allowed}input[type=file]{display:none}.fname,select{background:var(--rail);border:1px solid var(--strong);color:var(--text);font:12px 'JetBrains Mono';padding:6px 8px;border-radius:4px}.fname{width:190px}#status{font-size:12px;color:var(--faint)}.layout{display:flex;flex-wrap:wrap}.rail{flex:0 0 220px;background:var(--rail);border-right:1px solid var(--border);padding:16px 14px;align-self:flex-start;position:sticky;top:0}.rail h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:14px 0 8px}.rail h2:first-child{margin-top:0}.layer-toggle{display:flex;align-items:center;gap:9px;padding:6px 8px;cursor:pointer}.layer-toggle input{display:none}.swatch{width:11px;height:11px;border-radius:3px;opacity:.3}.layer-toggle input:checked+.swatch{opacity:1}.label{font-size:12.5px;color:var(--dim)}.layer-toggle input:checked~.label{color:var(--text)}select{width:100%;font:12.5px Inter}.rail-note{font-size:11px;color:var(--faint);line-height:1.55}.canvas-outer{flex:1 1 480px;overflow:auto;max-height:calc(100vh - 60px)}.canvas{position:relative;padding:20px clamp(10px,2vw,28px) 60px;min-width:640px}.rowblock{margin-bottom:26px}.rowlabel{font:10.5px 'JetBrains Mono';letter-spacing:.07em;color:var(--faint);margin:0 0 8px 2px}.rowmods{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}.modbox{position:relative;width:300px;flex:0 0 300px;background:var(--panel);border:1px solid var(--strong);border-radius:5px;transition:opacity .15s}.modbox.inactive{opacity:.38;border-style:dashed}.modbox.dim{opacity:.22}.modhead{padding:7px 8px 6px 9px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:6px;cursor:pointer}.modname{font:600 14px 'JetBrains Mono';line-height:1.25}.modsub{font-size:9px;color:var(--faint);margin-top:1px}.ports{padding:3px 0}.pair{display:grid;grid-template-columns:1fr 1fr}.cell,.bi{position:relative;display:flex;align-items:center;height:19px;padding:0 6px;font:11px 'JetBrains Mono';color:var(--text);cursor:pointer;gap:4px;min-width:0}.cell:hover,.bi:hover{background:#23262b}.cell.out{justify-content:flex-end;border-left:1px solid var(--border)}.cell.out .pname{order:-1;text-align:right}.pname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bi{height:20px;padding:0 8px;justify-content:center}.bi .pname{text-align:center}.dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:var(--rail);border:1.6px solid var(--faint);position:relative;z-index:2}.bi .dot{border-radius:2px;transform:rotate(45deg)}.dot.armed{background:#fff;box-shadow:0 0 0 3px #ffffff40}.dot.has-cable{border-color:var(--text)}.dot.default{background:var(--ok);border-color:var(--ok)}.more{width:18px;height:15px;color:var(--faint);background:transparent;border:1px solid var(--strong);border-radius:3px;cursor:pointer;font:bold 10px 'JetBrains Mono'}.more.marked{color:var(--blue);border-color:var(--blue)}.popover{display:none;position:absolute;z-index:20;top:calc(100% + 2px);left:0;width:100%;max-height:220px;overflow:auto;background:#1c1e22;border:1px solid var(--strong);border-radius:5px;padding:4px 0;box-shadow:0 8px 24px #0009}                 .popover .pair{                     display:grid;                     grid-template-columns:1fr 1fr;                 }                                  .popover .prow.in{                     justify-content:flex-start;                 }                                  .popover .prow.out{                     justify-content:flex-end;                     border-left:1px solid var(--border);                 }                                                   .popover .prow.out{                     display:flex;                     align-items:center;                     justify-content:flex-end;                 }                                  .popover .prow.out .pname{                     order:0;                     text-align:right;                 }                                  .popover .prow.out .popover-action,                 .popover .prow.out .popover-lock{                     order:0;                 }                                  .popover .prow.out .state-dot{                     order:1;                 }                                  .popover .prow.bi{                     grid-column:1 / -1;                     justify-content:center;                     border-left:0;                 }                 .popover.show{display:block}.prow{display:flex;align-items:center;gap:7px;height:22px;padding:0 9px;color:var(--dim);font:10.5px 'JetBrains Mono';cursor:pointer}.prow:hover{background:#25282f}.prow.visible{color:var(--text)}.prow.locked{cursor:not-allowed;opacity:.65}                                  .popover-action,                 .popover-lock{                     flex:0 0 auto;                     font:11px 'JetBrains Mono';                     line-height:1;                     margin:0 4px;                 }                 .popover-action{                     width:10px;                     color:#fff;                     text-align:center;                 }                    .popover-lock{                     font-family:system-ui,sans-serif;                     font-size:10px;                 }                                  .prow.out .pname{                     text-align:right;                 }                                  .dot,               .state-dot{                   position:relative;                   z-index:2;                   box-sizing:border-box;                   background:none;                   border:1.6px solid var(--faint);               }                              /* Größen */               .dot{                   width:11px;                   height:10px;                   flex:0 0 11px;               }                              .state-dot{                   width:11px;                   height:11px;                   flex:0 0 11px;               }                              /* Eingang: flächige Klammer */               .dot.in,               .state-dot.in{                   clip-path:polygon(                       0 0,                       100% 0,                       100% 100%,                       20% 100%,                       20% 58%,                       0 58%                   );               }                              /* Ausgang: Dreieck */               .dot.out,               .state-dot.out{                   clip-path:polygon(                       0 0,                       100% 50%,                       0 100%                   );               }                              /* Bidirektional: Raute */               .dot.bi,               .state-dot.bi{                   clip-path:polygon(                       50% 0,                       100% 50%,                       50% 100%,                       0 50%                   );               }                              /* Keine grüne Standardfarbe mehr */               .dot.default,               .state-dot.default{                   background:none;               }                                      svg#cables{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}path.cable{fill:none;stroke-width:1.7;opacity:.85;pointer-events:stroke;cursor:pointer}path.cable:hover{stroke-width:2.6;opacity:1}path.faded{opacity:.05}path.hi{stroke-width:2.8;opacity:1}path.dragline{fill:none;stroke:#fff;stroke-width:1.6;stroke-dasharray:3 3;opacity:.8}#empty{text-align:center;padding:60px 24px;color:var(--dim)}#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#23262b;border:1px solid var(--strong);padding:9px 16px;border-radius:5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50}#toast.show{opacity:1}#toast.err{border-color:var(--danger)}@media(max-width:900px){.rail{position:static;flex:1 1 100%;border-right:0;border-bottom:1px solid var(--border)}}                         /* Responsive Design */                 @media (max-width: 900px) {                     header {                         align-items: flex-start;                         flex-direction: column;                     }                                      .filebar {                         width: 100%;                     }                                      #status {                         flex: 1 1 100%;                     }                                      .layout {                         display: block;                     }                                      .rail {                         position: static;                         width: 100%;                         border-right: 0;                         border-bottom: 1px solid var(--border);                     }                                      .canvas-outer {                         width: 100%;                         max-height: none;                         overflow-x: hidden;                     }                                      .canvas {                         min-width: 0;                         width: 100%;                         padding: 16px 12px 48px;                     }                                      .rowmods {                         display: grid;                         grid-template-columns: repeat(                             auto-fit,                             minmax(min(300px, 100%), 1fr)                         );                         gap: 10px;                     }                                      .modbox {                         width: 100%;                         min-width: 0;                         flex: 1 1 auto;                     }                 }                                  @media (max-width: 560px) {                     header {                         padding: 12px;                     }                                      .filebar {                         display: grid;                         grid-template-columns: 1fr 1fr;                         width: 100%;                     }                                      .filebar .btn,                     .filebar .fname,                     #status {                         width: 100%;                     }                                      .filebar .fname {                         grid-column: 1 / -1;                         order: 2;                     }                                      #status {                         grid-column: 1 / -1;                         order: 3;                     }                                      .rail {                         padding: 12px;                     }                                      .canvas {                         padding: 12px 8px 40px;                     }                                      .rowmods {                         display: flex;                         flex-direction: column;                         width: 100%;                     }                                      .modbox {                         width: 100%;                         flex: 1 1 auto;                     }                                      .popover {                         max-height: 55vh;                     }                                      .cell,                     .bi,                     .prow {                         min-height: 24px;                         height: 24px;                     }                 }                                        /* Eingeklappte Module */                 .modbox.collapsed {                     min-height: 0;                 }                                  .modbox.collapsed .ports {                     position: absolute;                     left: 0;                     right: 0;                     bottom: -7px;                     height: 12px;                     padding: 0 7px;                     display: flex;                     align-items: center;                     gap: 0;                     z-index: 3;                     pointer-events: none;                 }                                  .modbox.collapsed .pair {                     display: contents;                 }                                  .modbox.collapsed .cell,                 .modbox.collapsed .bi {                     height: 12px;                     min-height: 12px;                     padding: 0;                     border: 0;                     pointer-events: auto;                 }                                  .modbox.collapsed .cell.in {                     order: 1;                     justify-content: flex-start;                     margin-right: auto;                 }                                  .modbox.collapsed .cell.out {                     order: 2;                     justify-content: flex-end;                     border-left: 0;                     margin-left: auto;                 }                                  .modbox.collapsed .bi {                     order: 3;                     justify-content: center;                     margin-left: 4px;                     margin-right: 4px;                 }                                  .modbox.collapsed > .ports .pname {                     display: none;                 }                 .dot{                     width:10px;                     height:10px;                     flex:0 0 10px;                     position:relative;                     z-index:2;                     background:var(--rail);                     border:1.6px solid var(--faint);                     transition:transform .12s ease;                     box-sizing:border-box;                     overflow:hidden;                 }                                  .dot.in{                     border-radius:2px 2px 2px 2px;                     clip-path:polygon(                         0 0,                         100% 0,                         100% 100%,                         20% 100%,                         20% 58%,                         0 58%                     );                     transform:skewY(0deg);                 }                                  .dot.out{                     border-radius:2px 2px 2px 2px;                     clip-path:polygon(                         0 0,                         100% 50%,                         0 100%                     );                 }                                  .dot.bi{                     border-radius:2px 2px 2px 2px;                     clip-path:polygon(                         50% 0,                         100% 50%,                         50% 100%,                         0 50%                     );                 }                                  .dot.armed{                     background:#fff;                     box-shadow:0 0 0 3px #ffffff40;                 }                                  .dot.has-cable{                     border-color:var(--text);                 }                                  .dot.default{                     background:var(--ok);                     border-color:var(--ok);                 }                                                                    .modbox.collapsed .modhead {                     padding-bottom: 13px;                 }                        .modbox.popover-dim{                     opacity:.28;                 }         
-        </style>    
-    </head>    
-    <body>        
-        <header><h1>Patch Tool</h1>            
-            <div class="filebar">                
-                <button class="btn" id="load">XML laden                 
-                </button>                
-                <input id="file" type="file" accept=".xml,text/xml">                
-                <input id="name" class="fname" placeholder="dateiname.xml" disabled>                
-                <button class="btn" id="save" disabled>Als XML speichern</button>    
-                <button class="btn" id="optimize" disabled>Rack optimieren</button>
-                <button class="btn" id="save-rack" disabled>Rack-XML speichern</button>            
-                <span id="status">Keine Datei geladen.                 
-                </span>            
-            </div>        
-        </header>        
-        <div class="layout">            
-            <nav class="rail"><h2>Signal-Layer</h2>                
-                <div id="layers">                
-                </div><h2>Stimme isolieren</h2>                
-                <select id="voice">                    
-                    <option value="">— keine —                     
-                    </option>                
-                </select><h2>Bedienung</h2>                
-                <p class="rail-note"><b>Ziehen</b> verbindet Ports.                     
-                    <br><b>Doppelklick / Rechtsklick</b> auf einen Port / Kabel löscht dessen Verbindung.                     
-                    <br>Ein Port kann mehrere Kabel tragen.                     
-                    <br>                    
-                    <span style="color:var(--ok)">●                     
-                    </span> Default aktiv &nbsp;                      
-                    <span style="color:var(--blue)">●                     
-                    </span> Default inaktiv                 
-                </p>            
-            </nav>            
-            <main class="canvas-outer">                
-                <div id="canvas" class="canvas">                    
-                    <div id="empty"><h2>Noch keine Konfiguration geladen</h2>                        
-                        <p>Lade deine XML-Datei über „XML laden“.                         
-                        </p>                    
-                    </div>                
-                </div>            
-            </main>        
-        </div>        
-        <div id="toast">        
-        </div>
-<script> 
-(()=>{'use strict';let S=null,sourceDoc=null,next=1,active=new Set(),selectedVoice='',selectedModule='',armed=null,ports={},drag=null,downloadCap=null,collapsedModules=new Set();
-const $=id=>document.getElementById(id),
-key=(m,p)=>m+'.'+p,
-mod=id=>S.modules.find(x=>x.id===id),
-port=(m,p)=>{
-    const x=mod(m);
-    return x&&x.ports.find(y=>y.id===p);
-},
-esc=x=>String(x??'')
-    .replace(/&/g,'&amp;')
-    .replace(/"/g,'&quot;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
-    
-    
-    
-    
-const full_labels = true;
+<html lang="de">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Patch Tool — Signal-Layer &amp; Verbindungen</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            :root{
+                --bg:#17181b;
+                --panel:#1e2024;
+                --border:#2d3035;
+                --strong:#3a3e45;
+                --text:#e9e7e1;
+                --dim:#8b8d93;
+                --faint:#55585f;
+                --rail:#0f1012;
+                --ok:#6fcf97;
+                --blue:#4f9fe0;
+                --danger:#e0594f;
+            }
 
-const rack_rows = 4;
-const rack_hp = 84;
+            *{box-sizing:border-box}
+            body{
+                margin:0;
+                min-height:100vh;
+                background:var(--bg);
+                color:var(--text);
+                font:14px Inter,system-ui,sans-serif;
+                user-select:none
+            }
 
-// Gewichtung nach Funktion
-const rack_weights={
-    connections:10, // kürzeste Verbindungen sind am wichtigsten
-    functions:6,    // gleiche Funktionen möglichst gruppieren
-    compactness:1   // Leerräume nur leicht vermeiden
-};
+            header{
+                padding:16px clamp(12px,3vw,32px) 12px;
+                border-bottom:1px solid var(--border);
+                display:flex;
+                flex-wrap:wrap;
+                gap:12px 20px;
+                align-items:center;
+                justify-content:space-between
+            }
 
-   
-function portLabel(p) {
-    return full_labels
-        ? (p.name || p.abbr || p.id)
-        : (p.abbr || p.name || p.id);
-}
-function toast(s,err){const t=$('toast');t.textContent=s;t.className='show'+(err?' err':'');clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',2600)}
-function cabled(m,p){return S.connections.some(c=>(c.fromMod===m&&c.fromPort===p)||(c.toMod===m&&c.toPort===p))}
-/* default_active is deliberately the only visibility setting. elementary is ignored. */
-function visible(m,p){return p.defaultActive||cabled(m,p.id)}
-function toggle(m,p){if(cabled(m,p.id)){toast('Verkabelte Ports können nicht ausgeblendet werden.',true);return}p.defaultActive=!p.defaultActive;render()}
-function parse(text){const d=new DOMParser().parseFromString(text,'text/xml');if(d.querySelector('parsererror'))throw Error('XML konnte nicht gelesen werden.');sourceDoc=d;const r=d.documentElement;const layers=[...r.querySelectorAll('layers>layer')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label'),color:x.getAttribute('color')}));const voices=[...r.querySelectorAll('voices>voice')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label')}));const functions=[...r.querySelectorAll('functions>function')].map(x=>({id:x.getAttribute('id'),row:+x.getAttribute('row')||99,label:x.getAttribute('label')||x.getAttribute('id')})).sort((a,b)=>a.row-b.row);const modules=[...r.querySelectorAll('modules>module')].map(m=>({id:m.getAttribute('id'),name:m.getAttribute('name')||m.getAttribute('id'),manufacturer:m.getAttribute('manufacturer')||'',function:m.getAttribute('function')||'utility',active:m.getAttribute('active')!=='false',voice:m.getAttribute('voice')||'',hp:Number(m.getAttribute('hp'))||0,collapsed:m.getAttribute('collapsed')==='true',ports:[...m.querySelectorAll('ports>port')].map(p=>({id:p.getAttribute('id'),abbr:p.getAttribute('abbr')||p.getAttribute('id').slice(0,3).toUpperCase(),name:p.getAttribute('name')||p.getAttribute('id'),direction:p.getAttribute('direction')||'in',layer:p.getAttribute('layer')||'mod',defaultActive:p.getAttribute('default_active')==='true',defaultNote:p.getAttribute('default_note')||''}))}));const connections=[...r.querySelectorAll('connections>connection')].map(c=>{const a=(c.getAttribute('from')||'').split('.'),b=(c.getAttribute('to')||'').split('.');return{id:'c'+next++,fromMod:a.shift(),fromPort:a.join('.'),toMod:b.shift(),toPort:b.join('.')}}).filter(c=>c.fromMod&&c.fromPort&&c.toMod&&c.toPort);return{title:r.getAttribute('title')||'Patch',hp:r.getAttribute('hp')||'',layers,voices,functions,modules,connections}}
-function resolve(am,ap,bm,bp){if(am===bm&&ap===bp)return'Ein Port kann nicht mit sich selbst verbunden werden.';const a=port(am,ap),b=port(bm,bp);if(!a||!b)return'Port nicht gefunden.';if(a.direction==='in'&&b.direction==='in')return'Zwei Eingänge lassen sich nicht direkt verbinden.';if(a.direction==='out'&&b.direction==='out')return'Zwei Ausgänge lassen sich nicht direkt verbinden.';if(a.direction==='out'||(a.direction==='bidirectional'&&b.direction==='in'))return{fromMod:am,fromPort:ap,toMod:bm,toPort:bp};return{fromMod:bm,fromPort:bp,toMod:am,toPort:ap}}
-function add(am,ap,bm,bp){const x=resolve(am,ap,bm,bp);if(typeof x==='string'){toast(x,true);return}S.connections.push({id:'c'+next++,...x});render()}
-function connected(start){if(!start)return null;const seen=new Set([start]);let changed=true;while(changed){changed=false;S.connections.forEach(c=>{if(seen.has(c.fromMod)&&!seen.has(c.toMod)){seen.add(c.toMod);changed=true}if(seen.has(c.toMod)&&!seen.has(c.fromMod)){seen.add(c.fromMod);changed=true}})}return seen}
-function center(el){const c=$('canvas').getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left+r.width/2-c.left+$('canvas').scrollLeft,y:r.top+r.height/2-c.top+$('canvas').scrollTop}}
-function draw(){const svg=$('cables');if(!svg)return;svg.querySelectorAll('path.cable').forEach(x=>x.remove());const start=selectedVoice?S.modules.find(m=>m.voice===selectedVoice)?.id:selectedModule,reach=connected(start);S.connections.forEach(c=>{const a=ports[key(c.fromMod,c.fromPort)],b=ports[key(c.toMod,c.toPort)];if(!a||!b)return;const fp=port(c.fromMod,c.fromPort),ca=center(a),cb=center(b),p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',`M ${ca.x} ${ca.y} L ${cb.x} ${cb.y}`);p.setAttribute('class','cable');p.setAttribute('stroke',S.layers.find(l=>l.id===fp.layer)?.color||'#888');const hi=!reach||(reach.has(c.fromMod)&&reach.has(c.toMod));if(!active.has(fp.layer))p.style.display='none';else if(!hi)p.classList.add('faded');p.oncontextmenu=e=>{e.preventDefault();remove(c.id)};svg.appendChild(p)});document.querySelectorAll('.modbox').forEach(b=>b.classList.toggle('dim',!!reach&&!reach.has(b.dataset.mod)))}
-function remove(id){S.connections=S.connections.filter(c=>c.id!==id);render()}
-function layerColor(layerId){
-    return S.layers.find(layer=>layer.id===layerId)?.color || '#888';
-}
-function applyPortColor(dot,p){
-    const color=layerColor(p.layer);
-    dot.style.borderColor=color;
-    dot.style.backgroundColor=p.defaultActive
-        ? color
-        : 'transparent';
-}
-function attach(dot,m,p,row){
-    let down,moved=false;
-    row.onmousedown=e=>{
-        e.preventDefault();
-        down={x:e.clientX,y:e.clientY};
-        moved=false;
-        armed=null;
-        const line=document.createElementNS(
-            'http://www.w3.org/2000/svg',
-            'path'
-        );
-        line.setAttribute('class','dragline');
-        $('cables').appendChild(line);
-        drag={line};
-        const move=q=>{
-            if(Math.hypot(q.clientX-down.x,q.clientY-down.y)>4)
-                moved=true;
-            if(drag){
-                const a=center(dot);
-                const cr=$('canvas').getBoundingClientRect();
-                const b={
-                    x:q.clientX-cr.left+$('canvas').scrollLeft,
-                    y:q.clientY-cr.top+$('canvas').scrollTop
-                };
-                line.setAttribute(
-                    'd',
-                    `M ${a.x} ${a.y} L ${b.x} ${b.y}`
+            h1{margin:0;font-size:16px}
+            .filebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+            .btn{
+                background:var(--panel);
+                border:1px solid var(--strong);
+                color:var(--text);
+                font:600 12.5px Inter;
+                padding:7px 12px;
+                border-radius:4px;
+                cursor:pointer
+            }
+            .btn:hover{background:#23262b}
+            .btn:disabled{opacity:.4;cursor:not-allowed}
+            input[type=file]{display:none}
+            .fname,select{
+                background:var(--rail);
+                border:1px solid var(--strong);
+                color:var(--text);
+                font:12px 'JetBrains Mono';
+                padding:6px 8px;
+                border-radius:4px
+            }
+            .fname{width:190px}
+
+            .rack-setting{
+                display:flex;
+                align-items:center;
+                gap:4px;
+                color:var(--dim);
+                font:11px 'JetBrains Mono';
+            }
+
+            .rack-input{
+                width:58px;
+                background:var(--rail);
+                border:1px solid var(--strong);
+                color:var(--text);
+                border-radius:4px;
+                padding:6px 5px;
+                font:12px 'JetBrains Mono';
+            }
+
+            .rack-input:disabled{
+                opacity:.4;
+            }
+
+            #status{font-size:12px;color:var(--faint)}
+            .layout{display:flex;flex-wrap:wrap}
+            .rail{
+                flex:0 0 220px;
+                background:var(--rail);
+                border-right:1px solid var(--border);
+                padding:16px 14px;
+                align-self:flex-start;
+                position:sticky;
+                top:0
+            }
+            .rail h2{
+                font-size:10.5px;
+                text-transform:uppercase;
+                letter-spacing:.08em;
+                color:var(--faint);
+                margin:14px 0 8px
+            }
+            .rail h2:first-child{margin-top:0}
+            .layer-toggle{
+                display:flex;
+                align-items:center;
+                gap:9px;
+                padding:6px 8px;
+                cursor:pointer
+            }
+            .layer-toggle input{display:none}
+            .swatch{
+                width:11px;
+                height:11px;
+                border-radius:3px;
+                opacity:.3
+            }
+            .layer-toggle input:checked+.swatch{opacity:1}
+            .label{font-size:12.5px;color:var(--dim)}
+            .layer-toggle input:checked~.label{color:var(--text)}
+            select{width:100%;font:12.5px Inter}
+            .rail-note{font-size:11px;color:var(--faint);line-height:1.55}
+            .canvas-outer{
+                flex:1 1 480px;
+                min-width:0;
+                height:calc(100vh - 60px);
+                min-height:0;
+                overflow-x:auto;
+                overflow-y:auto;
+            }
+            
+            .canvas{
+                position:relative;
+                padding:20px clamp(10px,2vw,28px) 60px;
+                min-width:640px
+            }
+            .rowblock{margin-bottom:26px}
+            .rowlabel{
+                font:10.5px 'JetBrains Mono';
+                letter-spacing:.07em;
+                color:var(--faint);
+                margin:0 0 8px 2px
+            }
+            .rowmods{
+                display:flex;
+                flex-wrap:wrap;
+                gap:10px;
+                align-items:flex-start
+            }
+            .modbox{
+                position:relative;
+                width:300px;
+                flex:0 0 300px;
+                background:var(--panel);
+                border:1px solid var(--strong);
+                border-radius:5px;
+                transition:opacity .15s
+            }
+            .modbox.inactive{opacity:.38;border-style:dashed}
+            .modbox.dim{opacity:.22}
+            .modhead{
+                padding:7px 8px 6px 9px;
+                border-bottom:1px solid var(--border);
+                display:flex;
+                align-items:flex-end;
+                justify-content:space-between;
+                gap:6px;
+                cursor:pointer
+            }
+            .modname{font:600 14px 'JetBrains Mono';line-height:1.25}
+            .modsub{font-size:9px;color:var(--faint);margin-top:1px}
+            .ports{padding:3px 0}
+            .pair{display:grid;grid-template-columns:1fr 1fr}
+            .cell,.bi{
+                position:relative;
+                display:flex;
+                align-items:center;
+                height:19px;
+                padding:0 6px;
+                font:11px 'JetBrains Mono';
+                color:var(--text);
+                cursor:pointer;
+                gap:4px;
+                min-width:0
+            }
+            .cell:hover,.bi:hover{background:#23262b}
+            .cell.out{
+                justify-content:flex-end;
+                border-left:1px solid var(--border)
+            }
+            .cell.out .pname{order:-1;text-align:right}
+            .pname{
+                overflow:hidden;
+                text-overflow:ellipsis;
+                white-space:nowrap
+            }
+            .bi{height:20px;padding:0 8px;justify-content:center}
+            .bi .pname{text-align:center}
+            .dot{
+                width:9px;
+                height:9px;
+                flex:0 0 9px;
+                border-radius:50%;
+                background:var(--rail);
+                border:1.6px solid var(--faint);
+                position:relative;
+                z-index:2
+            }
+            .bi .dot{
+                border-radius:2px;
+                transform:rotate(45deg)
+            }
+            .dot.armed{
+                background:#fff;
+                box-shadow:0 0 0 3px #ffffff40
+            }
+            .dot.has-cable{border-color:var(--text)}
+            .dot.default{background:var(--ok);border-color:var(--ok)}
+            .more{
+                width:18px;
+                height:15px;
+                color:var(--faint);
+                background:transparent;
+                border:1px solid var(--strong);
+                border-radius:3px;
+                cursor:pointer;
+                font:bold 10px 'JetBrains Mono'
+            }
+            .more.marked{color:var(--blue);border-color:var(--blue)}
+            .popover{
+                display:none;
+                position:absolute;
+                z-index:20;
+                top:calc(100% + 2px);
+                left:0;
+                width:100%;
+                max-height:220px;
+                overflow:auto;
+                background:#1c1e22;
+                border:1px solid var(--strong);
+                border-radius:5px;
+                padding:4px 0;
+                box-shadow:0 8px 24px #0009
+            }
+            .popover .pair{display:grid;grid-template-columns:1fr 1fr}
+            .popover .prow.in{justify-content:flex-start}
+            .popover .prow.out{
+                justify-content:flex-end;
+                border-left:1px solid var(--border)
+            }
+            .popover .prow.out{
+                display:flex;
+                align-items:center;
+                justify-content:flex-end
+            }
+            .popover .prow.out .pname{text-align:right}
+            .popover .prow.out .popover-action,
+            .popover .prow.out .popover-lock{order:0}
+            .popover .prow.out .state-dot{order:1}
+            .popover .prow.bi{
+                grid-column:1 / -1;
+                justify-content:center;
+                border-left:0
+            }
+            .popover.show{display:block}
+            .prow{
+                display:flex;
+                align-items:center;
+                gap:7px;
+                height:22px;
+                padding:0 9px;
+                color:var(--dim);
+                font:10.5px 'JetBrains Mono';
+                cursor:pointer
+            }
+            .prow:hover{background:#25282f}
+            .prow.visible{color:var(--text)}
+            .prow.locked{cursor:not-allowed;opacity:.65}
+            .popover-action,.popover-lock{
+                flex:0 0 auto;
+                font:11px 'JetBrains Mono';
+                line-height:1;
+                margin:0 4px
+            }
+            .popover-action{
+                width:10px;
+                color:#fff;
+                text-align:center
+            }
+            .popover-lock{
+                font-family:system-ui,sans-serif;
+                font-size:10px
+            }
+            .prow.out .pname{text-align:right}
+            .dot,.state-dot{
+                position:relative;
+                z-index:2;
+                box-sizing:border-box;
+                background:none;
+                border:1.6px solid var(--faint)
+            }
+            .dot{
+                width:11px;
+                height:10px;
+                flex:0 0 11px
+            }
+            .state-dot{
+                width:11px;
+                height:11px;
+                flex:0 0 11px
+            }
+            .dot.in,.state-dot.in{
+                clip-path:polygon(
+                    0 0,
+                    100% 0,
+                    100% 100%,
+                    20% 100%,
+                    20% 58%,
+                    0 58%
+                )
+            }
+            .dot.out,.state-dot.out{
+                clip-path:polygon(
+                    0 0,
+                    100% 50%,
+                    0 100%
+                )
+            }
+            .dot.bi,.state-dot.bi{
+                clip-path:polygon(
+                    50% 0,
+                    100% 50%,
+                    50% 100%,
+                    0 50%
+                )
+            }
+            .dot.default,.state-dot.default{background:none}
+
+            svg#cables{
+                position:absolute;
+                top:0;
+                left:0;
+                pointer-events:none;
+                overflow:visible
+            }
+
+            path.cable{
+                fill:none;
+                stroke-width:1.7;
+                opacity:.85;
+                pointer-events:stroke;
+                cursor:pointer
+            }
+            path.cable:hover{stroke-width:2.6;opacity:1}
+            path.faded{opacity:.05}
+            path.hi{stroke-width:2.8;opacity:1}
+            path.dragline{
+                fill:none;
+                stroke:#fff;
+                stroke-width:1.6;
+                stroke-dasharray:3 3;
+                opacity:.8
+            }
+
+            #empty{
+                text-align:center;
+                padding:60px 24px;
+                color:var(--dim)
+            }
+
+            #toast{
+                position:fixed;
+                bottom:18px;
+                left:50%;
+                transform:translateX(-50%);
+                background:#23262b;
+                border:1px solid var(--strong);
+                padding:9px 16px;
+                border-radius:5px;
+                opacity:0;
+                pointer-events:none;
+                transition:opacity .2s;
+                z-index:50
+            }
+            #toast.show{opacity:1}
+            #toast.err{border-color:var(--danger)}
+
+            @media(max-width:900px){
+                .rail{
+                    position:static;
+                    flex:1 1 100%;
+                    border-right:0;
+                    border-bottom:1px solid var(--border)
+                }
+            }
+
+            @media (max-width: 900px){
+                header{align-items:flex-start;flex-direction:column}
+                .filebar{width:100%}
+                #status{flex:1 1 100%}
+                .layout{display:block}
+                .rail{
+                    position:static;
+                    width:100%;
+                    border-right:0;
+                    border-bottom:1px solid var(--border)
+                }
+                .canvas-outer{
+                    width:100%;
+                    min-width:0;
+                    height:calc(100vh - 60px);
+                    max-height:none;
+                    overflow-x:auto;
+                    overflow-y:auto;
+                    -webkit-overflow-scrolling:touch;
+                }
+                .canvas{
+                    width:max-content;
+                    min-width:100%; /* min-width:640px; Falls die Funktionsansicht weiterhin mindestens 640 px benötigen soll */
+                }
+                .rowmods{
+                    display:grid;
+                    grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));
+                    gap:10px
+                }
+                .modbox{
+                    width:100%;
+                    min-width:0;
+                    flex:1 1 auto
+                }
+            }
+
+            @media (max-width: 560px){
+                header{padding:12px}
+                .filebar{
+                    display:grid;
+                    grid-template-columns:1fr 1fr;
+                    width:100%
+                }
+                .filebar .btn,
+                .filebar .fname,
+                #status{width:100%}
+                .filebar .fname{grid-column:1 / -1;order:2}
+                #status{grid-column:1 / -1;order:3}
+                .rail{padding:12px}
+                .canvas{padding:12px 8px 40px}
+                .rowmods{
+                    display:flex;
+                    flex-direction:column;
+                    width:100%
+                }
+                .modbox{
+                    width:100%;
+                    flex:1 1 auto
+                }
+                .popover{max-height:55vh}
+                .cell,.bi,.prow{min-height:24px;height:24px}
+            }
+
+            .modbox.collapsed{min-height:0}
+            .modbox.collapsed .ports{
+                position:absolute;
+                left:0;
+                right:0;
+                bottom:-7px;
+                height:12px;
+                padding:0 7px;
+                display:flex;
+                align-items:center;
+                gap:0;
+                z-index:3;
+                pointer-events:none
+            }
+            .modbox.collapsed .pair{display:contents}
+            .modbox.collapsed .cell,
+            .modbox.collapsed .bi{
+                height:12px;
+                min-height:12px;
+                padding:0;
+                border:0;
+                pointer-events:auto
+            }
+            .modbox.collapsed .cell.in{
+                order:1;
+                justify-content:flex-start;
+                margin-right:auto
+            }
+            .modbox.collapsed .cell.out{
+                order:2;
+                justify-content:flex-end;
+                border-left:0;
+                margin-left:auto
+            }
+            .modbox.collapsed .bi{
+                order:3;
+                justify-content:center;
+                margin-left:4px;
+                margin-right:4px
+            }
+            .modbox.collapsed > .ports .pname{display:none}
+
+            .dot{
+                width:10px;
+                height:10px;
+                flex:0 0 10px;
+                position:relative;
+                z-index:2;
+                background:var(--rail);
+                border:1.6px solid var(--faint);
+                transition:transform .12s ease;
+                box-sizing:border-box;
+                overflow:hidden
+            }
+
+            .dot.in{
+                border-radius:2px 2px 2px 2px;
+                clip-path:polygon(
+                    0 0,
+                    100% 0,
+                    100% 100%,
+                    20% 100%,
+                    20% 58%,
+                    0 58%
                 );
+                transform:skewY(0deg)
             }
-        };
-        const up=q=>{
-            document.removeEventListener('mousemove',move);
-            document.removeEventListener('mouseup',up);
-            line.remove();
-            drag=null;
-            const target=document.elementFromPoint(q.clientX,q.clientY);
-            const host=target?.closest?.('.cell,.bi');
-            const targetDot=host?.querySelector?.('.dot');
-            if(moved && targetDot && targetDot!==dot){
-                add(m,p,targetDot.dataset.mod,targetDot.dataset.port);
-            }else if(!moved){
-                if(armed){
-                    if(armed.m===m && armed.p===p){
-                        armed=null;
-                    }else{
-                        add(armed.m,armed.p,m,p);
-                        armed=null;
+
+            .dot.out{
+                border-radius:2px 2px 2px 2px;
+                clip-path:polygon(
+                    0 0,
+                    100% 50%,
+                    0 100%
+                )
+            }
+
+            .dot.bi{
+                border-radius:2px 2px 2px 2px;
+                clip-path:polygon(
+                    50% 0,
+                    100% 50%,
+                    50% 100%,
+                    0 50%
+                )
+            }
+
+            .dot.armed{
+                background:#fff;
+                box-shadow:0 0 0 3px #ffffff40
+            }
+            .dot.has-cable{border-color:var(--text)}
+            .dot.default{background:var(--ok);border-color:var(--ok)}
+
+            .modbox.collapsed .modhead{padding-bottom:13px}
+            .modbox.popover-dim{opacity:.28}
+
+            .rack-view{
+                display:flex;
+                flex-direction:column;
+                gap:18px;
+            
+                /*
+                 * Die Ansicht selbst darf breiter als
+                 * der sichtbare Container sein.
+                 */
+                width:max-content;
+                min-width:100%;
+            }
+            
+            .rack-row{
+                position:relative;
+                display:grid;
+            
+                /*
+                 * Die Spaltenbreite wird später per JavaScript
+                 * auf widthRackHp gesetzt.
+                 */
+                grid-template-columns:
+                    repeat(var(--rack-hp-count), var(--rack-unit-width));
+            
+                width:var(--rack-row-width);
+                min-width:var(--rack-row-width);
+                height:var(--rack-height);
+                min-height:var(--rack-height);
+            
+                gap:0;
+                padding:12px;
+            
+                background:var(--rail);
+                border:1px solid var(--border);
+                border-radius:5px;
+            }
+
+            .rack-row-label{
+                position:absolute;
+                top:3px;
+                left:8px;
+                color:var(--faint);
+                font:10px 'JetBrains Mono'
+            }
+
+            .rack-row .modbox{
+                width:auto;
+                min-width:0;
+                flex:initial;
+                grid-row:1;
+                margin-top:12px
+            }
+             /*
+            .rack-module{
+                width:auto;
+                min-width:0;
+                max-width:none;
+                flex:initial;
+                overflow:visible;
+            }
+            
+            .rack-module .modhead{
+                height:92px; 
+                min-width:0;
+                padding:0;
+                justify-content:center;
+                align-items:center;
+                overflow:visible;
+            }
+            
+            .rack-module .modhead>div:first-child{
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                transform:rotate(-90deg);
+                transform-origin:center center;
+                white-space:nowrap;
+            }
+            
+            .rack-module .modname,
+            .rack-module .modsub{
+                overflow:hidden;
+                text-overflow:ellipsis;
+                max-width:110px;
+            }
+            
+            .rack-module .modname{
+                font-size:11px;
+            }
+            
+            .rack-module .modsub{
+                display:none;
+            }
+            
+            .rack-module .more{
+                position:absolute;
+                right:2px;
+                top:2px;
+                z-index:4;
+            }
+            
+
+            .rack-module .ports .pname{
+                display:none;
+            }
+            
+            .rack-module .cell,
+            .rack-module .bi{
+                padding-left:2px;
+                padding-right:2px;
+                gap:0;
+            }
+            
+            .rack-module .bi{
+                justify-content:center;
+            }   
+               */      
+            .rack-module .cell.out{
+                justify-content:flex-end;
+            }
+            
+
+            
+            .rack-view{
+                width:max-content;
+                min-width:100%;
+            }
+            
+            .rack-row{
+                width:max-content;
+                min-width:calc(var(--rack-hp,84) * 10px);
+            }
+            
+            .rack-row .modbox{
+                width:auto;
+                min-width:0;
+                max-width:none;
+                height:calc(var(--rack-height) - 24px);
+                min-height:0;
+                flex:initial;
+                grid-row:1;
+                margin-top:12px;
+                overflow:visible;
+            }      
+ 
+.rack-module{
+    position:relative;
+    width:auto;
+    min-width:0;
+    max-width:none;
+    height:calc(var(--rack-height) - 24px);
+    min-height:0;
+    overflow:visible;
+}
+
+/*
+ * Der Header nimmt im Rack keinen Layoutplatz ein.
+ * Dadurch bleiben die Ports an ihren tatsächlichen Positionen.
+ */
+.rack-module .modhead{
+    position:absolute;
+    inset:0;
+    height:100%;
+    min-width:0;
+    padding:0;
+    border-bottom:0;
+    display:block;
+    overflow:visible;
+    z-index:4;
+    pointer-events:none;
+}
+
+/*
+ * Vertikale Beschriftung:
+ * gemeinsamer oberer Startpunkt,
+ * horizontale Position in der Mitte des Moduls.
+ */
+.rack-module .modhead>div:first-child{
+    position:absolute;
+    top:23px;
+    left:50%;
+
+    width:max-content;
+    height:calc(var(--rack-height) - 40px);
+
+    writing-mode:vertical-rl;
+    text-orientation:mixed;
+    white-space:nowrap;
+
+    transform:translateX(-50%);
+    pointer-events:none;
+}
+
+.rack-module .modname{
+    display:block;
+    font-size:11px;
+    line-height:1;
+    text-align:left;
+}
+
+.rack-module .modsub{
+    display:none;
+}
+
+/*
+ * Ports bleiben im Layout sichtbar und behalten
+ * ihre tatsächlichen DOM-Positionen.
+ */
+.rack-module .ports{
+    position:relative;
+    z-index:2;
+    height:100%;
+    min-height:0;
+    overflow:visible;
+}
+
+/*
+ * Portnamen nehmen in der Rack-Ansicht keinen
+ * zusätzlichen Platz ein.
+ */
+.rack-module .ports .pname{
+    display:none;
+}
+
+.rack-module .cell,
+.rack-module .bi{
+    padding-left:2px;
+    padding-right:2px;
+    gap:0;
+}
+
+.rack-module .cell.out{
+    justify-content:flex-end;
+}
+
+.rack-module .bi{
+    justify-content:center;
+}
+
+/*
+ * Der +-Button muss über dem Text liegen und
+ * weiterhin Mausereignisse empfangen.
+ */
+.rack-module .more{
+    position:absolute;
+    top:2px;
+    right:2px;
+    z-index:30;
+    pointer-events:auto;
+}
+  
+            
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Patch Tool</h1>
+            <div class="filebar">
+
+                <button class="btn" id="view-functions" disabled>Funktionsansicht</button>
+                <button class="btn" id="view-rack" disabled>Rack-Ansicht</button>
+
+                <button class="btn" id="load">XML laden</button>
+                <input id="file" type="file" accept=".xml,text/xml">
+                <input id="name" class="fname" placeholder="dateiname.xml" disabled>
+
+                <button class="btn" id="save" disabled>Als XML speichern</button>
+
+                <label class="rack-setting">
+                    Rows
+                    <input
+                        id="rack-rows"
+                        class="rack-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="4"
+                        disabled
+                    >
+                </label>
+
+                <label class="rack-setting">
+                    HP
+                    <input
+                        id="rack-hp"
+                        class="rack-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="84"
+                        disabled
+                    >
+                </label>
+
+                <button class="btn" id="optimize" disabled>Rack optimieren</button>
+                <button class="btn" id="save-rack" disabled>Rack-XML speichern</button>
+                <span id="status">Keine Datei geladen.</span>
+            </div>
+        </header>
+
+        <div class="layout">
+            <nav class="rail">
+                <h2>Signal-Layer</h2>
+                <div id="layers"></div>
+
+                <h2>Stimme isolieren</h2>
+                <select id="voice">
+                    <option value="">— keine —</option>
+                </select>
+
+                <h2>Bedienung</h2>
+                <p class="rail-note">
+                    <b>Ziehen</b> verbindet Ports.<br>
+                    <b>Doppelklick / Rechtsklick</b> auf einen Port / Kabel löscht dessen Verbindung.<br>
+                    Ein Port kann mehrere Kabel tragen.<br>
+                    <span style="color:var(--ok)">●</span> Default aktiv &nbsp;
+                    <span style="color:var(--blue)">●</span> Default inaktiv
+                </p>
+            </nav>
+
+            <main class="canvas-outer">
+                <div id="canvas" class="canvas">
+                    <div id="empty">
+                        <h2>Noch keine Konfiguration geladen</h2>
+                        <p>Lade deine XML-Datei über „XML laden“.</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <div id="toast"></div>
+
+        <script>
+            (() => {
+                'use strict';
+
+                let S = null,
+                    sourceDoc = null,
+                    next = 1,
+                    active = new Set(),
+                    selectedVoice = '',
+                    selectedModule = '',
+                    armed = null,
+                    ports = {},
+                    drag = null,
+                    downloadCap = null,
+                    collapsedModules = new Set(),
+                    viewMode = 'functions',
+                    optimizedIndex = 1;
+
+                const full_labels = true;
+
+                const defaultRackRows = 4;
+                const defaultRackHp = 84;
+                const widthRackHp = 15;
+                const heightRack = 375;
+                
+                let rack_rows = defaultRackRows;
+                let rack_hp = defaultRackHp;
+
+                const rack_weights = {
+                    connections: 10,
+                    functions: 6,
+                    compactness: 1
+                };
+
+                const $ = id => document.getElementById(id);
+                const key = (m, p) => m + '.' + p;
+
+                const mod = id => S.modules.find(x => x.id === id);
+                const port = (m, p) => {
+                    const x = mod(m);
+                    return x && x.ports.find(y => y.id === p);
+                };
+
+                const esc = x => String(x ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+
+                function portLabel(p) {
+                    return full_labels
+                        ? (p.name || p.abbr || p.id)
+                        : (p.abbr || p.name || p.id);
+                }
+
+                function toast(s, err) {
+                    const t = $('toast');
+                    t.textContent = s;
+                    t.className = 'show' + (err ? ' err' : '');
+                    clearTimeout(toast.t);
+                    toast.t = setTimeout(() => t.className = '', 2600);
+                }
+
+                function cabled(m, p) {
+                    return S.connections.some(c =>
+                        (c.fromMod === m && c.fromPort === p) ||
+                        (c.toMod === m && c.toPort === p)
+                    );
+                }
+
+                function visible(m, p) {
+                    return p.defaultActive || cabled(m, p.id);
+                }
+
+                function toggle(m, p) {
+                    if (cabled(m, p.id)) {
+                        toast('Verkabelte Ports können nicht ausgeblendet werden.', true);
+                        return;
                     }
-                }else{
-                    armed={m,p};
-                    dot.classList.add('armed');
+                    p.defaultActive = !p.defaultActive;
+                    render();
                 }
-            }
-        };
-        document.addEventListener('mousemove',move);
-        document.addEventListener('mouseup',up);
-    };
-    row.ondblclick=e=>{
-        e.stopPropagation();
-        for(let i=S.connections.length-1;i>=0;i--){
-            const c=S.connections[i];
-            if(
-                (c.fromMod===m && c.fromPort===p) ||
-                (c.toMod===m && c.toPort===p)
-            ){
-                S.connections.splice(i,1);
-                render();
-                return;
-            }
-        }
-    };
-    row.oncontextmenu=e=>{
-        e.preventDefault();
-        row.ondblclick(e);
-    };
-}
-function portMarkerClass(p){
-    if (p.direction === 'out') return 'out';
-    if (p.direction === 'in') return 'in';
-    return 'bi';
-}
 
-function closePopover(pop){
-    if(!pop) return;
-
-    pop.classList.remove('show');
-
-    document.querySelectorAll('.modbox.popover-dim')
-        .forEach(box=>{
-            box.classList.remove('popover-dim');
-        });
-}
-document.addEventListener('click',e=>{
-    const openPop=document.querySelector('.popover.show');
-    if(!openPop) return;
-    const owningBox=openPop.closest('.modbox');
-    if(
-        !owningBox?.contains(e.target) &&
-        !openPop.contains(e.target)
-    ){
-        closePopover(openPop);
-    }
-});
-
-// Optimierungsfunktionen 
-function moduleDegree(id){
-    return S.connections.reduce((n,c)=>{
-        return n+
-            (c.fromMod===id?1:0)+
-            (c.toMod===id?1:0);
-    },0);
-}
-
-function rackStateCopy(state){
-    return {
-        order:[...state.order],
-        rows:{...state.rows}
-    };
-}
-
-function buildRackPlacement(state){
-    const result=new Map();
-    const used=Array(rack_rows).fill(0);
-    const rowModules=Array.from(
-        {length:rack_rows},
-        ()=>[]
-    );
-
-    state.order.forEach(id=>{
-        const row=Math.max(
-            0,
-            Math.min(rack_rows-1,state.rows[id]??0)
-        );
-
-        const m=mod(id);
-        if(!m) return;
-
-        const start=used[row];
-
-        result.set(id,{
-            row,
-            hp:start,
-            center:start+m.hp/2
-        });
-
-        used[row]+=m.hp;
-        rowModules[row].push(id);
-    });
-
-    return {
-        modules:result,
-        used,
-        rowModules
-    };
-}
-// Gewichtung nach Funktion
-function functionGroupingCost(placement){
-    let cost=0;
-
-    const groups=new Map();
-
-    S.modules.forEach(m=>{
-        if(!groups.has(m.function)){
-            groups.set(m.function,[]);
-        }
-
-        groups.get(m.function).push(m);
-    });
-
-    groups.forEach(modules=>{
-        if(modules.length<2) return;
-
-        const positions=modules
-            .map(m=>placement.modules.get(m.id))
-            .filter(Boolean);
-
-        for(let i=0;i<positions.length;i++){
-            for(let j=i+1;j<positions.length;j++){
-                const a=positions[i];
-                const b=positions[j];
-
-                const rowDistance=Math.abs(a.row-b.row);
-                const hpDistance=Math.abs(a.center-b.center);
-
-                // Module gleicher Funktion sollen nahe beieinander liegen
-                cost+=rowDistance*10;
-                cost+=hpDistance;
-            }
-        }
-    });
-
-    return cost;
-}
-// Bewertungsfunktion (inkl. Gewichtung nach Funktion)
-function rackCost(state){
-    if(!S){
-        throw Error('Keine Konfiguration geladen.');
-    }
-
-    const placement=buildRackPlacement(state);
-
-    let invalidCost=0;
-    let connectionCost=0;
-    let functionCost=0;
-    let compactnessCost=0;
-
-    placement.used.forEach(used=>{
-        if(used>rack_hp){
-            invalidCost+=(used-rack_hp)*100000;
-        }
-    });
-
-    S.modules.forEach(m=>{
-        if(m.hp>rack_hp){
-            invalidCost+=10000000;
-        }
-    });
-
-    S.connections.forEach(c=>{
-        const a=placement.modules.get(c.fromMod);
-        const b=placement.modules.get(c.toMod);
-
-        if(!a||!b){
-            invalidCost+=10000000;
-            return;
-        }
-
-        const horizontal=Math.abs(a.center-b.center);
-        const vertical=Math.abs(a.row-b.row)*rack_hp;
-
-        connectionCost+=horizontal+vertical;
-    });
-
-    functionCost=functionGroupingCost(placement);
-
-    placement.used.forEach(used=>{
-        compactnessCost+=used*.01;
-    });
-
-    /*
-     * Normierung innerhalb der Funktion:
-     * Die Maximalwerte werden erst verwendet,
-     * nachdem S geprüft wurde.
-     */
-    const maxConnectionCost=Math.max(
-        1,
-        S.connections.length*rack_rows*rack_hp
-    );
-
-    const moduleCount=S.modules.length;
-
-    const maxFunctionCost=Math.max(
-        1,
-        moduleCount*moduleCount*rack_hp
-    );    
-
-    const maxDistance=
-        S.connections.length*
-        rack_rows*
-        rack_hp;
-    
-    const maxFunctionDistance=
-        S.modules.length*
-        S.modules.length*
-        rack_hp;
-
-    const normalizedConnections=
-        connectionCost/maxConnectionCost;
-        // const normalizedConnections=
-        //    normalizeCost(connectionCost,maxDistance);
-
-    const normalizedFunctions=
-        functionCost/maxFunctionCost;
-    // const normalizedFunctions=
-    //    normalizeCost(functionCost,maxFunctionDistance);
-
-    return invalidCost+
-        rack_weights.connections*normalizedConnections+
-        rack_weights.functions*normalizedFunctions+
-        rack_weights.compactness*compactnessCost;
-}
-// Startposition erzeugen
-function initialRackState(){
-    const order=[...S.modules]
-        .sort((a,b)=>{
-            const degreeDiff=
-                moduleDegree(b.id)-moduleDegree(a.id);
-
-            return degreeDiff||b.hp-a.hp;
-        })
-        .map(m=>m.id);
-
-    const rows={};
-    const used=Array(rack_rows).fill(0);
-
-    order.forEach(id=>{
-        const m=mod(id);
-
-        let row=used.findIndex(x=>x+m.hp<=rack_hp);
-
-        if(row<0){
-            row=used.indexOf(Math.min(...used));
-        }
-
-        rows[id]=row;
-        used[row]+=m.hp;
-    });
-
-    return {order,rows};
-}
-// Die eigentliche Optimierung
-function optimizeRack(){
-    if(!S||!S.modules.length){
-        throw Error('Keine Konfiguration geladen.');
-    }
-
-    const totalHp=S.modules.reduce(
-        (sum,m)=>sum+m.hp,
-        0
-    );
-
-    if(S.modules.some(m=>m.hp<=0)){
-        throw Error(
-            'Mindestens ein Modul besitzt keine gültige HP-Breite.'
-        );
-    }
-
-    if(totalHp>rack_rows*rack_hp){
-        throw Error(
-            `Die Module benötigen ${totalHp} HP, `+
-            `verfügbar sind nur ${rack_rows*rack_hp} HP.`
-        );
-    }
-
-    let current=initialRackState();
-    let currentCost=rackCost(current);
-
-    let best=rackStateCopy(current);
-    let bestCost=currentCost;
-
-    let temperature=250;
-    const iterations=Math.max(
-        20000,
-        S.modules.length*3000
-    );
-
-    for(let i=0;i<iterations;i++){
-        const candidate=rackStateCopy(current);
-        const a=Math.floor(
-            Math.random()*candidate.order.length
-        );
-        const b=Math.floor(
-            Math.random()*candidate.order.length
-        );
-
-        if(Math.random()<.55){
-            // Reihenfolge innerhalb des Racks ändern
-            [
-                candidate.order[a],
-                candidate.order[b]
-            ]=[
-                candidate.order[b],
-                candidate.order[a]
-            ];
-        }else{
-            // Modul in eine andere Rack-Reihe verschieben
-            const id=candidate.order[a];
-            candidate.rows[id]=Math.floor(
-                Math.random()*rack_rows
-            );
-        }
-
-        const candidateCost=rackCost(candidate);
-        const delta=candidateCost-currentCost;
-        const probability=Math.exp(-delta/temperature);
-
-        if(delta<0||Math.random()<probability){
-            current=candidate;
-            currentCost=candidateCost;
-        }
-
-        if(currentCost<bestCost){
-            best=rackStateCopy(current);
-            bestCost=currentCost;
-        }
-
-        temperature*=.99965;
-
-        if(temperature<.05){
-            temperature=.05;
-        }
-    }
-
-    const placement=buildRackPlacement(best);
-
-    if(placement.used.some(x=>x>rack_hp)){
-        throw Error(
-            'Es konnte keine gültige Rack-Positionierung gefunden werden.'
-        );
-    }
-
-    return {
-        cost:bestCost,
-        placement
-    };
-}
-// Beim erfolgreichen Laden aktivieren
-// $('optimize').disabled=false;
-// Button initialisieren
-
-$('optimize').onclick=()=>{
-    if(!S){
-        toast('Bitte zuerst eine XML-Datei laden.',true);
-        return;
-    }
-
-    try{
-        const result=optimizeRack();
-        window.rackPlacement=result.placement;
-
-        $('save-rack').disabled=false;
-
-        toast(
-            'Rack optimiert — Kosten: '+
-            Math.round(result.cost)
-        );
-    }catch(x){
-        toast(
-            'Fehler beim Optimieren: '+x.message,
-            true
-        );
-    }
-};
-
-
-// Separaten XML-Export erzeugen
-function exportRackXML(){
-    if(!window.rackPlacement){
-        throw Error(
-            'Bitte zuerst die Rack-Positionierung berechnen.'
-        );
-    }
-
-    const d=sourceDoc.cloneNode(true);
-    const root=d.documentElement;
-    const placement=window.rackPlacement;
-
-    root.setAttribute('rack_rows',String(rack_rows));
-    root.setAttribute('rack_hp',String(rack_hp));
-
-    S.modules.forEach(m=>{
-        const node=[
-            ...root.querySelectorAll('modules>module')
-        ].find(x=>x.getAttribute('id')===m.id);
-
-        const pos=placement.modules.get(m.id);
-
-        if(!node||!pos) return;
-
-        node.setAttribute('rack_row',String(pos.row+1));
-        node.setAttribute(
-            'rack_hp_start',
-            String(Math.round(pos.hp))
-        );
-        node.setAttribute(
-            'rack_hp_end',
-            String(Math.round(pos.hp+m.hp))
-        );
-    });
-
-    return new XMLSerializer()
-        .serializeToString(d);
-}  
-// Nach dem Laden aktivieren:
-// $('save-rack').disabled=false;
-// Download-Funktion:
-$('save-rack').onclick=()=>{
-    try{
-        const data=exportRackXML();
-
-        const base=(
-            $('name').value.trim()||
-            'patch.xml'
-        ).replace(/\.xml$/i,'');
-
-        const filename=base+'-rack.xml';
-        const a=document.createElement('a');
-
-        a.href=URL.createObjectURL(
-            new Blob(
-                [data],
-                {type:'application/xml'}
-            )
-        );
-
-        a.download=filename;
-        a.click();
-
-        setTimeout(()=>{
-            URL.revokeObjectURL(a.href);
-        },1000);
-
-        toast('Rack-XML gespeichert.');
-    }catch(x){
-        toast(
-            'Rack-XML konnte nicht gespeichert werden: '+
-            x.message,
-            true
-        );
-    }
-};
-
-
-function render(){const c=$('canvas');c.innerHTML='';ports={};if(!S){c.innerHTML=$('empty').outerHTML;return}const rows={};S.functions.forEach(f=>(rows[f.row]??={label:f.label,ids:[]}).ids.push(f.id));Object.keys(rows).sort((a,b)=>a-b).forEach(n=>{const r=rows[n],ms=S.modules.filter(m=>r.ids.includes(m.function));if(!ms.length)return;const block=document.createElement('section');block.className='rowblock';block.innerHTML=`<div class="rowlabel">${esc(r.label).toUpperCase()}</div>`;const list=document.createElement('div');list.className='rowmods';ms.forEach(m=>{
-const box=document.createElement('article');
-box.className='modbox'
-    +(m.active?'':' inactive')
-    +(collapsedModules.has(m.id)?' collapsed':'');
-    
-box.dataset.mod=m.id;const head=document.createElement('div');head.className='modhead';head.innerHTML=`<div><div class="modname">${esc(m.name)}</div><div class="modsub">${esc(m.manufacturer)}${m.active?'':' · inaktiv'}</div></div>`;const hasHidden=m.ports.some(p=>!p.defaultActive&&!cabled(m.id,p.id));const more=document.createElement('button');more.className='more'+(hasHidden?' marked':'');more.textContent='+';more.title='Ports ein-/ausblenden';head.appendChild(more);
-head.onclick=e=>{if(e.target!==more){selectedModule=selectedModule===m.id?'':m.id;selectedVoice='';$('voice').value='';draw()}};
-head.ondblclick=e=>{
-    if(e.target===more) return;
-    e.stopPropagation();
-    if(collapsedModules.has(m.id)){
-        collapsedModules.delete(m.id);
-    }else{
-        collapsedModules.add(m.id);
-    }
-    render();
-};
-box.appendChild(head);const pw=document.createElement('div');pw.className='ports';const ps=m.ports.filter(p=>visible(m.id,p)),ins=ps.filter(p=>p.direction==='in'),outs=ps.filter(p=>p.direction==='out'),bis=ps.filter(p=>p.direction==='bidirectional');for(let i=0;i<Math.max(ins.length,outs.length);i++){const row=document.createElement('div');row.className='pair';[['in',ins[i]],['out',outs[i]]].forEach(([side,p])=>{const cell=document.createElement('div');cell.className='cell '+side;if(!p){row.appendChild(cell);return}const d=document.createElement('span');d.className='dot '+portMarkerClass(p)+(p.defaultActive?' default':'');applyPortColor(d,p);d.dataset.mod=m.id;d.dataset.port=p.id;ports[key(m.id,p.id)]=d;cell.title=p.name+(p.defaultNote?' — '+p.defaultNote:'');cell.append(d,Object.assign(document.createElement('span'),{className:'pname',textContent:portLabel(p)}));attach(d,m.id,p.id,cell);row.appendChild(cell)});pw.appendChild(row)}bis.forEach(p=>{const row=document.createElement('div');row.className='bi';const d=document.createElement('span');d.className='dot '+portMarkerClass(p)+(p.defaultActive?' default':'');applyPortColor(d,p);d.dataset.mod=m.id;d.dataset.port=p.id;ports[key(m.id,p.id)]=d;row.append(d,Object.assign(document.createElement('span'),{className:'pname',textContent:portLabel(p)}));attach(d,m.id,p.id,row);pw.appendChild(row)});box.appendChild(pw);
-const inputs = m.ports.filter(p => p.direction === 'in');
-const outputs = m.ports.filter(p => p.direction === 'out');
-const bidirectional = m.ports.filter(p => p.direction === 'bidirectional');
-const pop=document.createElement('div');
-pop.className='popover';
-function makePopoverRow(p,direction){
-    const row=document.createElement('div');
-    row.className='prow '+direction;
-    if(!p){
-        return row;
-    }
-    const visiblePort=visible(m.id,p);
-    const locked=cabled(m.id,p.id);
-    row.className='prow '+direction+
-        (visiblePort?' visible':'')+
-        (locked?' locked':'');
-    const dot=document.createElement('span');
-    dot.className='state-dot '+
-        direction+
-        (p.defaultActive?' default':'');
-    applyPortColor(dot,p);
-    const name=document.createElement('span');
-    name.className='pname';
-    name.textContent=portLabel(p);
-    const status=document.createElement('span');
-    if(locked){
-        status.className='popover-lock';
-        status.textContent='🔒';
-    }else{
-        status.className='popover-action';
-        status.textContent=p.defaultActive?'−':'+';
-        status.title=p.defaultActive
-            ?'Port ausblenden'
-            :'Port einblenden';
-        row.onclick=e=>{
-            e.stopPropagation();
-            toggle(m.id,p);
-        };
-    }
-    if(direction==='out'){
-        // Ausgang: Statussymbol vor dem Namen, Portmarker rechts
-        row.append(status,name,dot);
-    }else{
-        // Eingang: Portmarker links, Name, Statussymbol rechts
-        row.append(dot,name,status);
-    }
-    return row;
-}
-const maxPorts=Math.max(inputs.length,outputs.length);
-for(let i=0;i<maxPorts;i++) {
-    const pair=document.createElement('div');
-    pair.className='pair';
-    pair.appendChild(makePopoverRow(inputs[i],'in'));
-    pair.appendChild(makePopoverRow(outputs[i],'out'));
-    pop.appendChild(pair);
-}
-bidirectional.forEach(p=>{
-    const row=makePopoverRow(p,'bi');
-    pop.appendChild(row);
-});
-more.onclick=e=>{
-    e.stopPropagation();
-    const isOpen=pop.classList.contains('show');
-    document.querySelectorAll('.popover.show')
-        .forEach(otherPop=>{
-            if(otherPop!==pop){
-                closePopover(otherPop);
-            }
-        });
-    if(isOpen){
-        closePopover(pop);
-        return;
-    }
-    document.querySelectorAll('.modbox.popover-dim')
-        .forEach(otherBox=>{
-            otherBox.classList.remove('popover-dim');
-        });
-    document.querySelectorAll('.modbox')
-        .forEach(otherBox=>{
-            if(otherBox!==box){
-                otherBox.classList.add('popover-dim');
-            }
-        });
-    pop.classList.add('show');
-};
-
-box.appendChild(pop);list.appendChild(box)});block.appendChild(list);c.appendChild(block)});const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.id='cables';c.appendChild(svg);requestAnimationFrame(()=>{svg.setAttribute('width',c.scrollWidth);svg.setAttribute('height',c.scrollHeight);svg.setAttribute('viewBox',`0 0 ${c.scrollWidth} ${c.scrollHeight}`);S.connections.forEach(x=>{ports[key(x.fromMod,x.fromPort)]?.classList.add('has-cable');ports[key(x.toMod,x.toPort)]?.classList.add('has-cable')});draw()})}
-function sidebar(){active=new Set(S.layers.map(x=>x.id));$('layers').innerHTML='';S.layers.forEach(l=>{const x=document.createElement('label');x.className='layer-toggle';x.innerHTML=`<input type="checkbox" checked><span class="swatch" style="background:${l.color}"></span><span class="label">${esc(l.label)}</span>`;x.querySelector('input').onchange=e=>{e.target.checked?active.add(l.id):active.delete(l.id);draw()};$('layers').appendChild(x)});$('voice').innerHTML='<option value="">— keine —</option>'+S.voices.map(v=>`<option value="${esc(v.id)}">${esc(v.label)}</option>`).join('');$('voice').onchange=e=>{selectedVoice=e.target.value;selectedModule='';draw()}}
-function exportXML(){const d=sourceDoc.cloneNode(true),root=d.documentElement;
-S.modules.forEach(m=>{
-    const moduleNode=[
-        ...root.querySelectorAll('modules>module')
-    ].find(x=>x.getAttribute('id')===m.id);
-    if(!moduleNode) return;
-    moduleNode.setAttribute(
-        'collapsed',
-        collapsedModules.has(m.id)?'true':'false'
-    );
-    m.ports.forEach(p=>{
-        const node=[
-            ...moduleNode.querySelectorAll('ports>port')
-        ].find(x=>x.getAttribute('id')===p.id);
-        if(node){
-            node.setAttribute(
-                'default_active',
-                p.defaultActive?'true':'false'
-            );
-        }
-    });
-});
-let con=root.querySelector('connections');if(!con){con=d.createElement('connections');root.appendChild(con)}while(con.firstChild)con.removeChild(con.firstChild);S.connections.forEach(c=>{const n=d.createElement('connection');n.setAttribute('from',c.fromMod+'.'+c.fromPort);n.setAttribute('to',c.toMod+'.'+c.toPort);con.appendChild(n)});return new XMLSerializer().serializeToString(d)}
-
-
-
-
-$('load').onclick=()=>$('file').click();
-
-$('file').onchange=e=>{
-    const f=e.target.files[0];
-    if(!f) return;
-
-    const r=new FileReader;
-    r.onload=()=>{
-
-        try{
-            S=parse(r.result);
-
-            collapsedModules.clear();
-            S.modules.forEach(m=>{
-                if(m.collapsed){
-                    collapsedModules.add(m.id);
+                function parse(text) {
+                    const d = new DOMParser().parseFromString(text, 'text/xml');
+                    
+                    
+                    if (d.querySelector('parsererror')) {
+                        throw Error('XML konnte nicht gelesen werden.');
+                    }
+                    
+                    sourceDoc=d;
+                    
+                    const r = d.documentElement;
+
+                    const parsedRackRows = Number(r.getAttribute('rack_rows'));
+                    const parsedRackHp = Number(r.getAttribute('rack_hp'));
+
+                    const rackRows =
+                        Number.isInteger(parsedRackRows) && parsedRackRows > 0
+                            ? parsedRackRows
+                            : defaultRackRows;
+
+                    const rackHp =
+                        Number.isInteger(parsedRackHp) && parsedRackHp > 0
+                            ? parsedRackHp
+                            : defaultRackHp;
+
+                    const layers = [...r.querySelectorAll('layers>layer')].map(x => ({
+                        id: x.getAttribute('id'),
+                        label: x.getAttribute('label'),
+                        color: x.getAttribute('color')
+                    }));
+
+                    const voices = [...r.querySelectorAll('voices>voice')].map(x => ({
+                        id: x.getAttribute('id'),
+                        label: x.getAttribute('label')
+                    }));
+
+                    const functions = [...r.querySelectorAll('functions>function')].map(x => ({
+                        id: x.getAttribute('id'),
+                        row: +x.getAttribute('row') || 99,
+                        label: x.getAttribute('label') || x.getAttribute('id')
+                    })).sort((a, b) => a.row - b.row);
+
+                    const modules = [...r.querySelectorAll('modules>module')].map(m => ({
+                        id: m.getAttribute('id'),
+                        name: m.getAttribute('name') || m.getAttribute('id'),
+                        manufacturer: m.getAttribute('manufacturer') || '',
+                        function: m.getAttribute('function') || 'utility',
+                        active: m.getAttribute('active') !== 'false',
+                        voice: m.getAttribute('voice') || '',
+                        hp: Number(m.getAttribute('hp')) || 0,
+                        collapsed: m.getAttribute('collapsed') === 'true',
+                        ports: [...m.querySelectorAll('ports>port')].map(p => ({
+                            id: p.getAttribute('id'),
+                            abbr: p.getAttribute('abbr') || p.getAttribute('id').slice(0, 3).toUpperCase(),
+                            name: p.getAttribute('name') || p.getAttribute('id'),
+                            direction: p.getAttribute('direction') || 'in',
+                            layer: p.getAttribute('layer') || 'mod',
+                            defaultActive: p.getAttribute('default_active') === 'true',
+                            defaultNote: p.getAttribute('default_note') || ''
+                        }))
+                    }));
+
+                    const connections = [...r.querySelectorAll('connections>connection')].map(c => {
+                        const a = (c.getAttribute('from') || '').split('.');
+                        const b = (c.getAttribute('to') || '').split('.');
+                        return {
+                            id: 'c' + next++,
+                            fromMod: a.shift(),
+                            fromPort: a.join('.'),
+                            toMod: b.shift(),
+                            toPort: b.join('.')
+                        };
+                    }).filter(c => c.fromMod && c.fromPort && c.toMod && c.toPort);
+
+                    return {
+                        title: r.getAttribute('title') || 'Patch',
+                        hp: r.getAttribute('hp') || '',
+                        rackRows,
+                        rackHp,
+                        layers,
+                        voices,
+                        functions,
+                        modules,
+                        connections
+                    };
                 }
-            });
 
-            selectedModule='';
-            selectedVoice='';
+                function resolve(am, ap, bm, bp) {
+                    if (am === bm && ap === bp) {
+                        return 'Ein Port kann nicht mit sich selbst verbunden werden.';
+                    }
 
-            $('status').textContent=
-                `${S.title} — ${S.modules.length} Module, ${S.connections.length} Verbindungen geladen`;
+                    const a = port(am, ap);
+                    const b = port(bm, bp);
 
-            $('name').value =
-                f.name.replace(/\.xml$/i,'')+'-patched.xml';
+                    if (!a || !b) return 'Port nicht gefunden.';
+                    if (a.direction === 'in' && b.direction === 'in') return 'Zwei Eingänge lassen sich nicht direkt verbinden.';
+                    if (a.direction === 'out' && b.direction === 'out') return 'Zwei Ausgänge lassen sich nicht direkt verbinden.';
+                    if (a.direction === 'out' || (a.direction === 'bidirectional' && b.direction === 'in')) {
+                        return { fromMod: am, fromPort: ap, toMod: bm, toPort: bp };
+                    }
 
-            $('name').disabled=false;
-            $('save').disabled=false;
-            $('optimize').disabled=false;
-            $('save-rack').disabled=true;
+                    return { fromMod: bm, fromPort: bp, toMod: am, toPort: ap };
+                }
 
-            sidebar();
-            render();
-        }
-        catch(x){
-            toast('Fehler beim Einlesen: '+x.message,true);
-        }
-    };
+                function add(am, ap, bm, bp) {
+                    const x = resolve(am, ap, bm, bp);
+                    if (typeof x === 'string') {
+                        toast(x, true);
+                        return;
+                    }
 
-    r.readAsText(f);
-};
+                    S.connections.push({ id: 'c' + next++, ...x });
+                    render();
+                }
 
+                function connected(start) {
+                    if (!start) return null;
 
+                    const seen = new Set([start]);
+                    let changed = true;
 
-// $('save').onclick=async()=>{let n=$('name').value.trim()||'patch.xml';if(!/\.xml$/i.test(n))n+='.xml';const data=exportXML();try{if(window.claude?.use){downloadCap??=await claude.use('downloads');if(downloadCap){const r=await downloadCap.save({filename:n,data});toast(r.status==='saved'?'Gespeichert.':'Übergeben.');return}}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/xml'}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Gespeichert.')}catch(x){toast('Speichern fehlgeschlagen: '+x.message,true)}};
-$('save').onclick=async()=>{
-    let n=$('name').value.trim()||'patch.xml';
+                    while (changed) {
+                        changed = false;
+                        S.connections.forEach(c => {
+                            if (seen.has(c.fromMod) && !seen.has(c.toMod)) {
+                                seen.add(c.toMod);
+                                changed = true;
+                            }
+                            if (seen.has(c.toMod) && !seen.has(c.fromMod)) {
+                                seen.add(c.fromMod);
+                                changed = true;
+                            }
+                        });
+                    }
 
-    if(!/\.xml$/i.test(n)){
-        n+='.xml';
-    }
+                    return seen;
+                }
 
-    const data=exportXML();
+                function center(el) {
+                    const c = $('canvas').getBoundingClientRect();
+                    const r = el.getBoundingClientRect();
 
-    try{
-        if(window.claude?.use){
-            downloadCap??=await claude.use('downloads');
+                    return {
+                        x: r.left + r.width / 2 - c.left + $('canvas').scrollLeft,
+                        y: r.top + r.height / 2 - c.top + $('canvas').scrollTop
+                    };
+                }
 
-            if(downloadCap){
-                const r=await downloadCap.save({
-                    filename:n,
-                    data
+                function draw() {
+                    const svg = $('cables');
+                    if (!svg) return;
+
+                    svg.querySelectorAll('path.cable').forEach(x => x.remove());
+
+                    const start = selectedVoice
+                        ? S.modules.find(m => m.voice === selectedVoice)?.id
+                        : selectedModule;
+
+                    const reach = connected(start);
+
+                    S.connections.forEach(c => {
+                        const a = ports[key(c.fromMod, c.fromPort)];
+                        const b = ports[key(c.toMod, c.toPort)];
+
+                        if (!a || !b) return;
+
+                        const fp = port(c.fromMod, c.fromPort);
+                        const ca = center(a);
+                        const cb = center(b);
+
+                        const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        p.setAttribute('d', `M ${ca.x} ${ca.y} L ${cb.x} ${cb.y}`);
+                        p.setAttribute('class', 'cable');
+                        p.setAttribute('stroke', S.layers.find(l => l.id === fp.layer)?.color || '#888');
+
+                        const hi = !reach || (reach.has(c.fromMod) && reach.has(c.toMod));
+
+                        if (!active.has(fp.layer)) {
+                            p.style.display = 'none';
+                        } else if (!hi) {
+                            p.classList.add('faded');
+                        }
+
+                        p.oncontextmenu = e => {
+                            e.preventDefault();
+                            remove(c.id);
+                        };
+
+                        svg.appendChild(p);
+                    });
+
+                    document.querySelectorAll('.modbox').forEach(box => {
+                        box.classList.toggle('dim', !!reach && !reach.has(box.dataset.mod));
+                    });
+                }
+
+                function remove(id) {
+                    S.connections = S.connections.filter(c => c.id !== id);
+                    render();
+                }
+
+                function layerColor(layerId) {
+                    return S.layers.find(layer => layer.id === layerId)?.color || '#888';
+                }
+
+                function applyPortColor(dot, p) {
+                    const color = layerColor(p.layer);
+                    dot.style.borderColor = color;
+                    dot.style.backgroundColor = p.defaultActive ? color : 'transparent';
+                }
+
+                function attach(dot, m, p, row) {
+                    let down, moved = false;
+
+                    row.onmousedown = e => {
+                        e.preventDefault();
+                        down = { x: e.clientX, y: e.clientY };
+                        moved = false;
+                        armed = null;
+
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        line.setAttribute('class', 'dragline');
+                        $('cables').appendChild(line);
+                        drag = { line };
+
+                        const move = q => {
+                            if (Math.hypot(q.clientX - down.x, q.clientY - down.y) > 4) moved = true;
+
+                            if (drag) {
+                                const a = center(dot);
+                                const cr = $('canvas').getBoundingClientRect();
+                                const b = {
+                                    x: q.clientX - cr.left + $('canvas').scrollLeft,
+                                    y: q.clientY - cr.top + $('canvas').scrollTop
+                                };
+                                line.setAttribute('d', `M ${a.x} ${a.y} L ${b.x} ${b.y}`);
+                            }
+                        };
+
+                        const up = q => {
+                            document.removeEventListener('mousemove', move);
+                            document.removeEventListener('mouseup', up);
+                            line.remove();
+                            drag = null;
+
+                            const target = document.elementFromPoint(q.clientX, q.clientY);
+                            const host = target?.closest?.('.cell,.bi');
+                            const targetDot = host?.querySelector?.('.dot');
+
+                            if (moved && targetDot && targetDot !== dot) {
+                                add(m, p, targetDot.dataset.mod, targetDot.dataset.port);
+                            } else if (!moved) {
+                                if (armed) {
+                                    if (armed.m === m && armed.p === p) {
+                                        armed = null;
+                                    } else {
+                                        add(armed.m, armed.p, m, p);
+                                        armed = null;
+                                    }
+                                } else {
+                                    armed = { m, p };
+                                    dot.classList.add('armed');
+                                }
+                            }
+                        };
+
+                        document.addEventListener('mousemove', move);
+                        document.addEventListener('mouseup', up);
+                    };
+
+                    row.ondblclick = e => {
+                        e.stopPropagation();
+
+                        for (let i = S.connections.length - 1; i >= 0; i--) {
+                            const c = S.connections[i];
+                            if ((c.fromMod === m && c.fromPort === p) || (c.toMod === m && c.toPort === p)) {
+                                S.connections.splice(i, 1);
+                                render();
+                                return;
+                            }
+                        }
+                    };
+
+                    row.oncontextmenu = e => {
+                        e.preventDefault();
+                        row.ondblclick(e);
+                    };
+                }
+
+                function portMarkerClass(p) {
+                    if (p.direction === 'out') return 'out';
+                    if (p.direction === 'in') return 'in';
+                    return 'bi';
+                }
+
+                function closePopover(pop) {
+                    if (!pop) return;
+
+                    pop.classList.remove('show');
+
+                    document.querySelectorAll('.modbox.popover-dim').forEach(box => {
+                        box.classList.remove('popover-dim');
+                    });
+                }
+
+                document.addEventListener('click', e => {
+                    const openPop = document.querySelector('.popover.show');
+                    if (!openPop) return;
+
+                    if (openPop.contains(e.target)) return;
+
+                    const owner = openPop.closest('.modbox');
+                    if (owner) {
+                        const more = owner.querySelector('.more');
+                        if (more && more.contains(e.target)) return;
+                    }
+
+                    closePopover(openPop);
                 });
 
-                toast(
-                    r.status==='saved'
-                        ?'Gespeichert.'
-                        :'Übergeben.'
-                );
+                function moduleDegree(id) {
+                    return S.connections.reduce((n, c) => {
+                        return n + (c.fromMod === id ? 1 : 0) + (c.toMod === id ? 1 : 0);
+                    }, 0);
+                }
 
-                return;
-            }
-        }
+                function rackStateCopy(state) {
+                    return {
+                        order: [...state.order],
+                        rows: { ...state.rows }
+                    };
+                }
 
-        const a=document.createElement('a');
+                function buildRackPlacement(state) {
+                    const result = new Map();
+                    const used = Array(rack_rows).fill(0);
+                    const rowModules = Array.from({ length: rack_rows }, () => []);
 
-        a.href=URL.createObjectURL(
-            new Blob(
-                [data],
-                {type:'application/xml'}
-            )
-        );
+                    state.order.forEach(id => {
+                        const row = Math.max(0, Math.min(rack_rows - 1, state.rows[id] ?? 0));
+                        const m = mod(id);
+                        if (!m) return;
 
-        a.download=n;
-        a.click();
+                        const start = used[row];
 
-        setTimeout(()=>{
-            URL.revokeObjectURL(a.href);
-        },1000);
+                        result.set(id, {
+                            row,
+                            hp: start,
+                            center: start + m.hp / 2
+                        });
 
-        toast('Gespeichert.');
-    }catch(x){
-        toast(
-            'Speichern fehlgeschlagen: '+x.message,
-            true
-        );
-    }
-};
+                        used[row] += m.hp;
+                        rowModules[row].push(id);
+                    });
 
+                    return { modules: result, used, rowModules };
+                }     
+                
+                function buildDefaultRackPlacement(){
+                    return buildRackPlacement(
+                        initialRackState()
+                    );
+                }
 
-//document.onclick=e=>{if(!e.target.closest('.more')&&!e.target.closest('.popover'))document.querySelectorAll('.popover.show').forEach(x=>x.classList.remove('show'))};
-document.addEventListener('click',e=>{
-    const openPop=document.querySelector('.popover.show');
+                function functionGroupingCost(placement) {
+                    let cost = 0;
 
-    if(!openPop) return;
+                    const groups = new Map();
 
-    // Klick auf das geöffnete Popover selbst ignorieren
-    if(openPop.contains(e.target)) return;
+                    S.modules.forEach(m => {
+                        if (!groups.has(m.function)) groups.set(m.function, []);
+                        groups.get(m.function).push(m);
+                    });
 
-    // Klick auf den zugehörigen Öffnen-/Schließen-Button ignorieren.
-    // Der more.onclick-Handler übernimmt das Umschalten.
-    const owner= openPop.closest('.modbox');
+                    groups.forEach(modules => {
+                        if (modules.length < 2) return;
 
-    if(owner){
-        const more=owner.querySelector('.more');
+                        const positions = modules
+                            .map(m => placement.modules.get(m.id))
+                            .filter(Boolean);
 
-        if(more && more.contains(e.target)){
-            return;
-        }
-    }
+                        for (let i = 0; i < positions.length; i++) {
+                            for (let j = i + 1; j < positions.length; j++) {
+                                const a = positions[i];
+                                const b = positions[j];
 
-    closePopover(openPop);
-});
+                                const rowDistance = Math.abs(a.row - b.row);
+                                const hpDistance = Math.abs(a.center - b.center);
 
+                                cost += rowDistance * 10;
+                                cost += hpDistance;
+                            }
+                        }
+                    });
 
-let resizeTimer;
-function resizeAndRedraw() {
-    const svg = $('cables');
-    const canvas = $('canvas');
-    if (!svg || !canvas || !S) return;
-    svg.setAttribute('width', canvas.scrollWidth);
-    svg.setAttribute('height', canvas.scrollHeight);
-    svg.setAttribute(
-        'viewBox',
-        `0 0 ${canvas.scrollWidth} ${canvas.scrollHeight}`
-    );
-    draw();
-}
-window.onresize=()=>{
-    clearTimeout(resizeTimer);
-    resizeTimer=setTimeout(()=>{
-        requestAnimationFrame(()=>{
-            resizeAndRedraw();
-        });
-    },100);
-};
-if(window.ResizeObserver){
-    const canvasObserver=new ResizeObserver(()=>{
-        clearTimeout(resizeTimer);
-        resizeTimer=setTimeout(()=>{
-            requestAnimationFrame(()=>{
-                resizeAndRedraw();
-            });
-        },50);
-    });
-    canvasObserver.observe($('canvas'));
-}
-document.onkeydown=e=>{if(e.key==='Escape')armed=null}
-})();
-</script>    
+                    return cost;
+                }
+
+                function rackCost(state) {
+                    if (!S) throw Error('Keine Konfiguration geladen.');
+
+                    const placement = buildRackPlacement(state);
+
+                    let invalidCost = 0;
+                    let connectionCost = 0;
+                    let functionCost = 0;
+                    let compactnessCost = 0;
+
+                    placement.used.forEach(used => {
+                        if (used > rack_hp) {
+                            invalidCost += (used - rack_hp) * 100000;
+                        }
+                    });
+
+                    S.modules.forEach(m => {
+                        if (m.hp > rack_hp) {
+                            invalidCost += 10000000;
+                        }
+                    });
+
+                    S.connections.forEach(c => {
+                        const a = placement.modules.get(c.fromMod);
+                        const b = placement.modules.get(c.toMod);
+
+                        if (!a || !b) {
+                            invalidCost += 10000000;
+                            return;
+                        }
+
+                        const horizontal = Math.abs(a.center - b.center);
+                        const vertical = Math.abs(a.row - b.row) * rack_hp;
+
+                        connectionCost += horizontal + vertical;
+                    });
+
+                    functionCost = functionGroupingCost(placement);
+
+                    placement.used.forEach(used => {
+                        compactnessCost += used * .01;
+                    });
+
+                    const maxConnectionCost = Math.max(1, S.connections.length * rack_rows * rack_hp);
+                    const moduleCount = S.modules.length;
+                    const maxFunctionCost = Math.max(1, moduleCount * moduleCount * rack_hp);
+
+                    const normalizedConnections = connectionCost / maxConnectionCost;
+                    const normalizedFunctions = functionCost / maxFunctionCost;
+
+                    return invalidCost
+                        + rack_weights.connections * normalizedConnections
+                        + rack_weights.functions * normalizedFunctions
+                        + rack_weights.compactness * compactnessCost;
+                }
+
+                function initialRackState() {
+                    const order = [...S.modules]
+                        .sort((a, b) => {
+                            const degreeDiff = moduleDegree(b.id) - moduleDegree(a.id);
+                            return degreeDiff || b.hp - a.hp;
+                        })
+                        .map(m => m.id);
+
+                    const rows = {};
+                    const used = Array(rack_rows).fill(0);
+
+                    order.forEach(id => {
+                        const m = mod(id);
+
+                        let row = used.findIndex(x => x + m.hp <= rack_hp);
+                        if (row < 0) row = used.indexOf(Math.min(...used));
+
+                        rows[id] = row;
+                        used[row] += m.hp;
+                    });
+
+                    return { order, rows };
+                }
+
+                function optimizeRack() {
+                    if (!S || !S.modules.length) {
+                        throw Error('Keine Konfiguration geladen.');
+                    }
+
+                    const totalHp = S.modules.reduce((sum, m) => sum + m.hp, 0);
+
+                    if (S.modules.some(m => m.hp <= 0)) {
+                        throw Error('Mindestens ein Modul besitzt keine gültige HP-Breite.');
+                    }
+
+                    if (totalHp > rack_rows * rack_hp) {
+                        throw Error(`Die Module benötigen ${totalHp} HP, verfügbar sind nur ${rack_rows * rack_hp} HP.`);
+                    }
+
+                    let current = initialRackState();
+                    let currentCost = rackCost(current);
+
+                    let best = rackStateCopy(current);
+                    let bestCost = currentCost;
+
+                    let temperature = 250;
+                    const iterations = Math.max(20000, S.modules.length * 3000);
+
+                    for (let i = 0; i < iterations; i++) {
+                        const candidate = rackStateCopy(current);
+                        const a = Math.floor(Math.random() * candidate.order.length);
+                        const b = Math.floor(Math.random() * candidate.order.length);
+
+                        if (Math.random() < .55) {
+                            [candidate.order[a], candidate.order[b]] = [candidate.order[b], candidate.order[a]];
+                        } else {
+                            const id = candidate.order[a];
+                            candidate.rows[id] = Math.floor(Math.random() * rack_rows);
+                        }
+
+                        const candidateCost = rackCost(candidate);
+                        const delta = candidateCost - currentCost;
+                        const probability = Math.exp(-delta / temperature);
+
+                        if (delta < 0 || Math.random() < probability) {
+                            current = candidate;
+                            currentCost = candidateCost;
+                        }
+
+                        if (currentCost < bestCost) {
+                            best = rackStateCopy(current);
+                            bestCost = currentCost;
+                        }
+
+                        temperature *= .99965;
+                        if (temperature < .05) temperature = .05;
+                    }
+
+                    const placement = buildRackPlacement(best);
+
+                    if (placement.used.some(x => x > rack_hp)) {
+                        throw Error('Es konnte keine gültige Rack-Positionierung gefunden werden.');
+                    }
+
+                    return { cost: bestCost, placement };
+                }
+
+                function makeModuleBox(m) {
+                    const box = document.createElement('article');
+
+                    box.className = 'modbox'
+                        + (m.active ? '' : ' inactive')
+                        + (collapsedModules.has(m.id) ? ' collapsed' : '')
+                        + (viewMode==='rack'?' rack-module':'');
+
+                    box.dataset.mod = m.id;
+
+                    const head = document.createElement('div');
+                    head.className = 'modhead';
+
+                    head.innerHTML = `
+                        <div>
+                            <div class="modname">${esc(m.name)}</div>
+                            <div class="modsub">
+                                ${esc(m.manufacturer)}
+                                ${m.active ? '' : ' · inaktiv'}
+                            </div>
+                        </div>
+                    `;
+
+                    const hasHidden = m.ports.some(p => !p.defaultActive && !cabled(m.id, p.id));
+
+                    const more = document.createElement('button');
+                    more.className = 'more' + (hasHidden ? ' marked' : '');
+                    more.textContent = '+';
+                    more.title = 'Ports ein-/ausblenden';
+
+                    head.appendChild(more);
+
+                    head.onclick = e => {
+                        if (e.target !== more) {
+                            selectedModule = selectedModule === m.id ? '' : m.id;
+                            selectedVoice = '';
+                            $('voice').value = '';
+                            draw();
+                        }
+                    };
+
+                    head.ondblclick = e => {
+                        if (e.target === more) return;
+                        e.stopPropagation();
+
+                        if (collapsedModules.has(m.id)) {
+                            collapsedModules.delete(m.id);
+                        } else {
+                            collapsedModules.add(m.id);
+                        }
+
+                        render();
+                    };
+
+                    box.appendChild(head);
+
+                    const pw = document.createElement('div');
+                    pw.className = 'ports';
+
+                    const visiblePorts = m.ports.filter(p => visible(m.id, p));
+                    const inputs = visiblePorts.filter(p => p.direction === 'in');
+                    const outputs = visiblePorts.filter(p => p.direction === 'out');
+                    const bidirectional = visiblePorts.filter(p => p.direction === 'bidirectional');
+
+                    for (let i = 0; i < Math.max(inputs.length, outputs.length); i++) {
+                        const pair = document.createElement('div');
+                        pair.className = 'pair';
+
+                        [
+                            ['in', inputs[i]],
+                            ['out', outputs[i]]
+                        ].forEach(([side, p]) => {
+                            const cell = document.createElement('div');
+                            cell.className = 'cell ' + side;
+
+                            if (!p) {
+                                pair.appendChild(cell);
+                                return;
+                            }
+
+                            const dot = document.createElement('span');
+                            dot.className = 'dot ' + portMarkerClass(p) + (p.defaultActive ? ' default' : '');
+                            applyPortColor(dot, p);
+
+                            dot.dataset.mod = m.id;
+                            dot.dataset.port = p.id;
+                            ports[key(m.id, p.id)] = dot;
+
+                            cell.title = p.name + (p.defaultNote ? ' — ' + p.defaultNote : '');
+
+                            const name = document.createElement('span');
+                            name.className = 'pname';
+                            name.textContent = portLabel(p);
+
+                            cell.append(dot, name);
+                            attach(dot, m.id, p.id, cell);
+
+                            pair.appendChild(cell);
+                        });
+
+                        pw.appendChild(pair);
+                    }
+
+                    bidirectional.forEach(p => {
+                        const row = document.createElement('div');
+                        row.className = 'bi';
+
+                        const dot = document.createElement('span');
+                        dot.className = 'dot ' + portMarkerClass(p) + (p.defaultActive ? ' default' : '');
+                        applyPortColor(dot, p);
+
+                        dot.dataset.mod = m.id;
+                        dot.dataset.port = p.id;
+                        ports[key(m.id, p.id)] = dot;
+
+                        const name = document.createElement('span');
+                        name.className = 'pname';
+                        name.textContent = portLabel(p);
+
+                        row.append(dot, name);
+                        attach(dot, m.id, p.id, row);
+
+                        pw.appendChild(row);
+                    });
+
+                    box.appendChild(pw);
+
+                    const allInputs = m.ports.filter(p => p.direction === 'in');
+                    const allOutputs = m.ports.filter(p => p.direction === 'out');
+                    const allBidirectional = m.ports.filter(p => p.direction === 'bidirectional');
+
+                    const pop = document.createElement('div');
+                    pop.className = 'popover';
+
+                    function makePopoverRow(p, direction) {
+                        const row = document.createElement('div');
+                        row.className = 'prow ' + direction;
+
+                        if (!p) return row;
+
+                        const visiblePort = visible(m.id, p);
+                        const locked = cabled(m.id, p.id);
+
+                        row.className = 'prow ' + direction
+                            + (visiblePort ? ' visible' : '')
+                            + (locked ? ' locked' : '');
+
+                        const dot = document.createElement('span');
+                        dot.className = 'state-dot ' + direction + (p.defaultActive ? ' default' : '');
+                        applyPortColor(dot, p);
+
+                        const name = document.createElement('span');
+                        name.className = 'pname';
+                        name.textContent = portLabel(p);
+
+                        const status = document.createElement('span');
+
+                        if (locked) {
+                            status.className = 'popover-lock';
+                            status.textContent = '🔒';
+                        } else {
+                            status.className = 'popover-action';
+                            status.textContent = p.defaultActive ? '−' : '+';
+                            status.title = p.defaultActive ? 'Port ausblenden' : 'Port einblenden';
+
+                            row.onclick = e => {
+                                e.stopPropagation();
+                                toggle(m.id, p);
+                            };
+                        }
+
+                        if (direction === 'out') {
+                            row.append(status, name, dot);
+                        } else {
+                            row.append(dot, name, status);
+                        }
+
+                        return row;
+                    }
+
+                    const maxPorts = Math.max(allInputs.length, allOutputs.length);
+
+                    for (let i = 0; i < maxPorts; i++) {
+                        const pair = document.createElement('div');
+                        pair.className = 'pair';
+
+                        pair.appendChild(makePopoverRow(allInputs[i], 'in'));
+                        pair.appendChild(makePopoverRow(allOutputs[i], 'out'));
+
+                        pop.appendChild(pair);
+                    }
+
+                    allBidirectional.forEach(p => {
+                        pop.appendChild(makePopoverRow(p, 'bi'));
+                    });
+
+                    more.onclick = e => {
+                        e.stopPropagation();
+
+                        const isOpen = pop.classList.contains('show');
+
+                        document.querySelectorAll('.popover.show').forEach(otherPop => {
+                            if (otherPop !== pop) closePopover(otherPop);
+                        });
+
+                        if (isOpen) {
+                            closePopover(pop);
+                            return;
+                        }
+
+                        document.querySelectorAll('.modbox.popover-dim').forEach(otherBox => {
+                            otherBox.classList.remove('popover-dim');
+                        });
+
+                        document.querySelectorAll('.modbox').forEach(otherBox => {
+                            if (otherBox !== box) {
+                                otherBox.classList.add('popover-dim');
+                            }
+                        });
+
+                        pop.classList.add('show');
+                    };
+
+                    box.appendChild(pop);
+
+                    return box;
+                }
+                
+                function renderRackRows(c){
+                    const placement=window.rackPlacement;
+                
+                    if(!placement){
+                        const emptyRack=document.createElement('div');
+                        emptyRack.id='empty';
+                        emptyRack.innerHTML=`
+                            <h2>Noch keine Rack-Optimierung</h2>
+                            <p>Führe zuerst die Rack-Optimierung aus.</p>
+                        `;
+                        c.appendChild(emptyRack);
+                        return;
+                    }
+                
+                    const rack=document.createElement('div');
+                    rack.className='rack-view';
+                
+                    for(
+                        let rowIndex=0;
+                        rowIndex<rack_rows;
+                        rowIndex++
+                    ){
+                        const rackRow=document.createElement('div');
+                        rackRow.className='rack-row';
+                
+                        const rackWidth=
+                            rack_hp*widthRackHp;
+                
+                        rackRow.style.setProperty(
+                            '--rack-hp-count',
+                            String(rack_hp)
+                        );
+                
+                        rackRow.style.setProperty(
+                            '--rack-unit-width',
+                            `${widthRackHp}px`
+                        );
+                
+                        rackRow.style.setProperty(
+                            '--rack-row-width',
+                            `${rackWidth}px`
+                        );
+                
+                        rackRow.style.setProperty(
+                            '--rack-height',
+                            `${heightRack}px`
+                        );
+                
+                        const label=document.createElement('div');
+                        label.className='rack-row-label';
+                        label.textContent=
+                            `Rack ${rowIndex+1} · ${rack_hp} HP`;
+                
+                        rackRow.appendChild(label);
+                
+                        const moduleIds=
+                            placement.rowModules[rowIndex]||[];
+                
+                        moduleIds.forEach(id=>{
+                            const m=mod(id);
+                            const pos=placement.modules.get(id);
+                
+                            if(!m||!pos) return;
+                
+                            const box=makeModuleBox(m);
+                
+                            const start=Math.round(pos.hp);
+                            const width=Math.max(
+                                1,
+                                Math.round(m.hp)
+                            );
+                
+                            box.style.gridColumn=
+                                `${start+1} / span ${width}`;
+                
+                            rackRow.appendChild(box);
+                        });
+                
+                        rack.appendChild(rackRow);
+                    }
+                
+                    c.appendChild(rack);
+                }
+
+                function render() {
+                    const c = $('canvas');
+                    c.innerHTML = '';
+                    ports = {};
+
+                    if (!S) {
+                        c.innerHTML = $('empty').outerHTML;
+                        return;
+                    }
+
+                    if (viewMode === 'functions') {
+                        const rows = {};
+
+                        S.functions.forEach(f => {
+                            (rows[f.row] ??= { label: f.label, ids: [] }).ids.push(f.id);
+                        });
+
+                        Object.keys(rows)
+                            .sort((a, b) => a - b)
+                            .forEach(n => {
+                                const r = rows[n];
+                                const modules = S.modules.filter(m => r.ids.includes(m.function));
+
+                                if (!modules.length) return;
+
+                                const block = document.createElement('section');
+                                block.className = 'rowblock';
+
+                                const label = document.createElement('div');
+                                label.className = 'rowlabel';
+                                label.textContent = String(r.label).toUpperCase();
+
+                                const list = document.createElement('div');
+                                list.className = 'rowmods';
+
+                                modules.forEach(m => {
+                                    list.appendChild(makeModuleBox(m));
+                                });
+
+                                block.appendChild(label);
+                                block.appendChild(list);
+                                c.appendChild(block);
+                            });
+                    }
+
+                    if (viewMode === 'rack') {
+                        renderRackRows(c);
+                    }
+
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.id = 'cables';
+                    c.appendChild(svg);
+
+                    requestAnimationFrame(() => {
+                        svg.setAttribute('width', c.scrollWidth);
+                        svg.setAttribute('height', c.scrollHeight);
+                        svg.setAttribute('viewBox', `0 0 ${c.scrollWidth} ${c.scrollHeight}`);
+
+                        S.connections.forEach(connection => {
+                            ports[key(connection.fromMod, connection.fromPort)]?.classList.add('has-cable');
+                            ports[key(connection.toMod, connection.toPort)]?.classList.add('has-cable');
+                        });
+
+                        draw();
+                    });
+                }
+
+                function exportXML(options = {}) {
+                
+                    if(!sourceDoc){
+                        throw Error(
+                            'Keine XML-Datei geladen.'
+                        );
+                    }
+ 
+                    const d = sourceDoc.cloneNode(true);
+                    const root = d.documentElement;
+
+                    S.modules.forEach(m => {
+                        const moduleNode = [...root.querySelectorAll('modules>module')]
+                            .find(x => x.getAttribute('id') === m.id);
+
+                        if (!moduleNode) return;
+
+                        moduleNode.setAttribute('collapsed', collapsedModules.has(m.id) ? 'true' : 'false');
+
+                        m.ports.forEach(p => {
+                            const node = [...moduleNode.querySelectorAll('ports>port')]
+                                .find(x => x.getAttribute('id') === p.id);
+
+                            if (node) {
+                                node.setAttribute('default_active', p.defaultActive ? 'true' : 'false');
+                            }
+                        });
+                    });
+
+                    if (options.includeRack) {
+                        if (!window.rackPlacement) {
+                            throw Error('Bitte zuerst die Rack-Positionierung berechnen.');
+                        }
+
+                        root.setAttribute('rack_rows', String(rack_rows));
+                        root.setAttribute('rack_hp', String(rack_hp));
+
+                        S.modules.forEach(m => {
+                            const node = [...root.querySelectorAll('modules>module')]
+                                .find(x => x.getAttribute('id') === m.id);
+
+                            const pos = window.rackPlacement.modules.get(m.id);
+
+                            if (!node || !pos) return;
+
+                            node.setAttribute('rack_row', String(pos.row + 1));
+                            node.setAttribute('rack_hp_start', String(Math.round(pos.hp)));
+                            node.setAttribute('rack_hp_end', String(Math.round(pos.hp + m.hp)));
+                        });
+                    }
+
+                    let con = root.querySelector('connections');
+                    if (!con) {
+                        con = d.createElement('connections');
+                        root.appendChild(con);
+                    }
+
+                    while (con.firstChild) con.removeChild(con.firstChild);
+
+                    S.connections.forEach(c => {
+                        const n = d.createElement('connection');
+                        n.setAttribute('from', c.fromMod + '.' + c.fromPort);
+                        n.setAttribute('to', c.toMod + '.' + c.toPort);
+                        con.appendChild(n);
+                    });
+
+                    return new XMLSerializer().serializeToString(d);
+                }
+
+                async function downloadXML(data, filename) {
+                    try {
+                        if (window.claude?.use) {
+                            downloadCap ??= await claude.use('downloads');
+
+                            if (downloadCap) {
+                                const r = await downloadCap.save({ filename, data });
+                                toast(r.status === 'saved' ? 'Gespeichert.' : 'Übergeben.');
+                                return;
+                            }
+                        }
+
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(new Blob([data], { type: 'application/xml' }));
+                        a.download = filename;
+                        a.click();
+                        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+                        toast('Gespeichert.');
+                    } catch (x) {
+                        toast('Speichern fehlgeschlagen: ' + x.message, true);
+                    }
+                }
+
+                function updateRackSettings() {
+                    const rows = Number($('rack-rows').value);
+                    const hp = Number($('rack-hp').value);
+
+                    if (!Number.isInteger(rows) || rows < 1) {
+                        $('rack-rows').value = rack_rows;
+                        toast('Die Anzahl der Rack-Reihen muss mindestens 1 sein.', true);
+                        return false;
+                    }
+
+                    if (!Number.isInteger(hp) || hp < 1) {
+                        $('rack-hp').value = rack_hp;
+                        toast('Die Rack-Breite muss mindestens 1 HP betragen.', true);
+                        return false;
+                    }
+
+                    rack_rows = rows;
+                    rack_hp = hp;
+
+                    window.rackPlacement = null;
+                    $('save-rack').disabled = true;
+                    $('view-rack').disabled = true;
+
+                    if (viewMode === 'rack') {
+                        viewMode = 'functions';
+                    }
+
+                    render();
+                    return true;
+                }
+
+                $('view-functions').disabled = false;
+                $('view-rack').disabled = true;
+
+                $('view-functions').onclick = () => {
+                    viewMode = 'functions';
+                    render();
+                };
+
+                $('view-rack').onclick = () => {
+                    if (!window.rackPlacement) {
+                        toast('Bitte zuerst das Rack optimieren.', true);
+                        return;
+                    }
+
+                    viewMode = 'rack';
+                    render();
+                };
+
+                $('optimize').onclick = () => {
+                    if (!S) {
+                        toast('Bitte zuerst eine XML-Datei laden.', true);
+                        return;
+                    }
+
+                    try {
+                        const result = optimizeRack();
+                        window.rackPlacement = result.placement;
+
+                        $('save-rack').disabled = false;
+                        $('view-rack').disabled = false;
+
+                        toast('Rack optimiert — Kosten: ' + Math.round(result.cost));
+                    } catch (x) {
+                        toast('Fehler beim Optimieren: ' + x.message, true);
+                    }
+                };
+
+                $('save-rack').onclick = async () => {
+                    try {
+                        const base = ($('name').value.trim() || 'patch.xml').replace(/\.xml$/i, '');
+                        const filename = `${base}_optimized_${optimizedIndex++}.xml`;
+
+                        await downloadXML(
+                            exportXML({ includeRack: true }),
+                            filename
+                        );
+                    } catch (x) {
+                        toast('Optimiertes XML konnte nicht gespeichert werden: ' + x.message, true);
+                    }
+                };
+
+                $('save').onclick = async () => {
+                    const name = $('name').value.trim() || 'patch.xml';
+                    await downloadXML(exportXML(), name);
+                };
+
+                function sidebar() {
+                    active = new Set(S.layers.map(x => x.id));
+                    $('layers').innerHTML = '';
+
+                    S.layers.forEach(l => {
+                        const x = document.createElement('label');
+                        x.className = 'layer-toggle';
+                        x.innerHTML = `
+                            <input type="checkbox" checked>
+                            <span class="swatch" style="background:${l.color}"></span>
+                            <span class="label">${esc(l.label)}</span>
+                        `;
+                        x.querySelector('input').onchange = e => {
+                            e.target.checked ? active.add(l.id) : active.delete(l.id);
+                            draw();
+                        };
+                        $('layers').appendChild(x);
+                    });
+
+                    $('voice').innerHTML = '<option value="">— keine —</option>' +
+                        S.voices.map(v => `<option value="${esc(v.id)}">${esc(v.label)}</option>`).join('');
+
+                    $('voice').onchange = e => {
+                        selectedVoice = e.target.value;
+                        selectedModule = '';
+                        draw();
+                    };
+                }
+
+                $('load').onclick = () => $('file').click();
+
+                $('file').onchange = e => {
+                    const f = e.target.files[0];
+                    if (!f) return;
+
+                    const r = new FileReader();
+                    r.onload = () => {
+                        try {
+                            S = parse(r.result);
+
+                            rack_rows = S.rackRows;
+                            rack_hp = S.rackHp;
+
+                            $('rack-rows').value = rack_rows;
+                            $('rack-hp').value = rack_hp;
+
+                            $('rack-rows').disabled = false;
+                            $('rack-hp').disabled = false;
+
+                            collapsedModules.clear();
+                            S.modules.forEach(m => {
+                                if (m.collapsed) collapsedModules.add(m.id);
+                            });
+
+                            selectedModule = '';
+                            selectedVoice = '';
+
+                            window.rackPlacement=
+                                buildDefaultRackPlacement();
+                            
+                            viewMode='functions';
+                            optimizedIndex=1;
+
+                            $('status').textContent =
+                                `${S.title} — ${S.modules.length} Module, ${S.connections.length} Verbindungen geladen`;
+
+                            $('name').value = f.name.replace(/\.xml$/i, '') + '-patched.xml';
+                            $('name').disabled = false;
+                            $('save').disabled = false;
+                            $('optimize').disabled = false;
+                            $('save-rack').disabled = true;
+                            $('view-functions').disabled = false;
+                            $('view-rack').disabled = false;
+
+                            sidebar();
+                            render();
+                        } catch (x) {
+                            toast('Fehler beim Einlesen: ' + x.message, true);
+                        }
+                    };
+
+                    r.readAsText(f);
+                };
+
+                $('rack-rows').onchange = updateRackSettings;
+                $('rack-hp').onchange = updateRackSettings;
+
+                let resizeTimer;
+                function resizeAndRedraw() {
+                    const svg = $('cables');
+                    const canvas = $('canvas');
+
+                    if (!svg || !canvas || !S) return;
+
+                    svg.setAttribute('width', canvas.scrollWidth);
+                    svg.setAttribute('height', canvas.scrollHeight);
+                    svg.setAttribute('viewBox', `0 0 ${canvas.scrollWidth} ${canvas.scrollHeight}`);
+                    draw();
+                }
+
+                window.onresize = () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(() => {
+                        requestAnimationFrame(() => resizeAndRedraw());
+                    }, 100);
+                };
+
+                if (window.ResizeObserver) {
+                    const canvasObserver = new ResizeObserver(() => {
+                        clearTimeout(resizeTimer);
+                        resizeTimer = setTimeout(() => {
+                            requestAnimationFrame(() => resizeAndRedraw());
+                        }, 50);
+                    });
+
+                    canvasObserver.observe($('canvas'));
+                }
+
+                document.onkeydown = e => {
+                    if (e.key === 'Escape') armed = null;
+                };
+            })();
+        </script>
     </body>
 </html>
