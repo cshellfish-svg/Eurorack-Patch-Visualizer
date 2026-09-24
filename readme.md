@@ -144,7 +144,7 @@ Das XML-Schema ist die Grundlage der gesamten App. Relevante Bestandteile sind:
   </functions>
 
   <modules>
-    <module id="m1" name="VCO" function="osc" active="true" hp="6" collapsed="false" rack_hp_start="0" rack_hp_end="6">
+    <module id="m1" name="VCO" function="osc" active="true" hp="6" collapsed="false" rack_row="4"  rack_hp_start="0" rack_hp_end="6">
       <ports>
         <port id="m1.out1" direction="out" layer="audio" default_active="true" />
         <port id="m1.in1" direction="in" layer="audio" default_active="true" />
@@ -164,8 +164,8 @@ Wichtige Punkte:
 - `default_active` ist der Standard-Sichtbarkeitsstatus eines Ports
 - `connections` werden nach dem Laden des Tools interaktiv ergänzt oder gelöst
 - `rack_rows` und `rack_hp` können als Attribute auf Root-Ebene gesetzt werden, um Rack-Layouts zu definieren
-- `collapsed` wird dynamisch beim Speichern gesetzt und gibt den letzten Aus- Eingeklappt Status eines Moduls wieder
-- `rack_hp_start` und `rack_hp_end` werden nach dem Rack optimieren über "Rack-XML speichern" dynamisch gesetzt
+- `collapsed` wird dynamisch beim Speichern gesetzt und gibt den letzten Aus- / Ein-geklappt Status eines Moduls wieder
+- `rack_hp_start`, `rack_hp_end` und `rack_row` sind Ergebnis der Rack Optimierung und werden beim Speichern dynamisch gesetzt und für die Rack Ansicht verwendet
 
 ---
 
