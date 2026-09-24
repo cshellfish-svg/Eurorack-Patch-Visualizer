@@ -18,8 +18,9 @@
                 </button>                
                 <input id="file" type="file" accept=".xml,text/xml">                
                 <input id="name" class="fname" placeholder="dateiname.xml" disabled>                
-                <button class="btn" id="save" disabled>Als XML speichern                 
-                </button>                
+                <button class="btn" id="save" disabled>Als XML speichern</button>    
+                <button class="btn" id="optimize" disabled>Rack optimieren</button>
+                <button class="btn" id="save-rack" disabled>Rack-XML speichern</button>            
                 <span id="status">Keine Datei geladen.                 
                 </span>            
             </div>        
@@ -73,7 +74,7 @@ esc=x=>String(x??'')
     
 const full_labels = true;
 
-const rack_rows = 2;
+const rack_rows = 4;
 const rack_hp = 84;
 
 function portLabel(p) {
@@ -86,7 +87,7 @@ function cabled(m,p){return S.connections.some(c=>(c.fromMod===m&&c.fromPort===p
 /* default_active is deliberately the only visibility setting. elementary is ignored. */
 function visible(m,p){return p.defaultActive||cabled(m,p.id)}
 function toggle(m,p){if(cabled(m,p.id)){toast('Verkabelte Ports können nicht ausgeblendet werden.',true);return}p.defaultActive=!p.defaultActive;render()}
-function parse(text){const d=new DOMParser().parseFromString(text,'text/xml');if(d.querySelector('parsererror'))throw Error('XML konnte nicht gelesen werden.');sourceDoc=d;const r=d.documentElement;const layers=[...r.querySelectorAll('layers>layer')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label'),color:x.getAttribute('color')}));const voices=[...r.querySelectorAll('voices>voice')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label')}));const functions=[...r.querySelectorAll('functions>function')].map(x=>({id:x.getAttribute('id'),row:+x.getAttribute('row')||99,label:x.getAttribute('label')||x.getAttribute('id')})).sort((a,b)=>a.row-b.row);const modules=[...r.querySelectorAll('modules>module')].map(m=>({id:m.getAttribute('id'),name:m.getAttribute('name')||m.getAttribute('id'),manufacturer:m.getAttribute('manufacturer')||'',function:m.getAttribute('function')||'utility',active:m.getAttribute('active')!=='false',voice:m.getAttribute('voice')||'',collapsed:m.getAttribute('collapsed')==='true',ports:[...m.querySelectorAll('ports>port')].map(p=>({id:p.getAttribute('id'),abbr:p.getAttribute('abbr')||p.getAttribute('id').slice(0,3).toUpperCase(),name:p.getAttribute('name')||p.getAttribute('id'),direction:p.getAttribute('direction')||'in',layer:p.getAttribute('layer')||'mod',defaultActive:p.getAttribute('default_active')==='true',defaultNote:p.getAttribute('default_note')||''}))}));const connections=[...r.querySelectorAll('connections>connection')].map(c=>{const a=(c.getAttribute('from')||'').split('.'),b=(c.getAttribute('to')||'').split('.');return{id:'c'+next++,fromMod:a.shift(),fromPort:a.join('.'),toMod:b.shift(),toPort:b.join('.')}}).filter(c=>c.fromMod&&c.fromPort&&c.toMod&&c.toPort);return{title:r.getAttribute('title')||'Patch',hp:r.getAttribute('hp')||'',layers,voices,functions,modules,connections}}
+function parse(text){const d=new DOMParser().parseFromString(text,'text/xml');if(d.querySelector('parsererror'))throw Error('XML konnte nicht gelesen werden.');sourceDoc=d;const r=d.documentElement;const layers=[...r.querySelectorAll('layers>layer')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label'),color:x.getAttribute('color')}));const voices=[...r.querySelectorAll('voices>voice')].map(x=>({id:x.getAttribute('id'),label:x.getAttribute('label')}));const functions=[...r.querySelectorAll('functions>function')].map(x=>({id:x.getAttribute('id'),row:+x.getAttribute('row')||99,label:x.getAttribute('label')||x.getAttribute('id')})).sort((a,b)=>a.row-b.row);const modules=[...r.querySelectorAll('modules>module')].map(m=>({id:m.getAttribute('id'),name:m.getAttribute('name')||m.getAttribute('id'),manufacturer:m.getAttribute('manufacturer')||'',function:m.getAttribute('function')||'utility',active:m.getAttribute('active')!=='false',voice:m.getAttribute('voice')||'',hp:Number(m.getAttribute('hp'))||0,collapsed:m.getAttribute('collapsed')==='true',ports:[...m.querySelectorAll('ports>port')].map(p=>({id:p.getAttribute('id'),abbr:p.getAttribute('abbr')||p.getAttribute('id').slice(0,3).toUpperCase(),name:p.getAttribute('name')||p.getAttribute('id'),direction:p.getAttribute('direction')||'in',layer:p.getAttribute('layer')||'mod',defaultActive:p.getAttribute('default_active')==='true',defaultNote:p.getAttribute('default_note')||''}))}));const connections=[...r.querySelectorAll('connections>connection')].map(c=>{const a=(c.getAttribute('from')||'').split('.'),b=(c.getAttribute('to')||'').split('.');return{id:'c'+next++,fromMod:a.shift(),fromPort:a.join('.'),toMod:b.shift(),toPort:b.join('.')}}).filter(c=>c.fromMod&&c.fromPort&&c.toMod&&c.toPort);return{title:r.getAttribute('title')||'Patch',hp:r.getAttribute('hp')||'',layers,voices,functions,modules,connections}}
 function resolve(am,ap,bm,bp){if(am===bm&&ap===bp)return'Ein Port kann nicht mit sich selbst verbunden werden.';const a=port(am,ap),b=port(bm,bp);if(!a||!b)return'Port nicht gefunden.';if(a.direction==='in'&&b.direction==='in')return'Zwei Eingänge lassen sich nicht direkt verbinden.';if(a.direction==='out'&&b.direction==='out')return'Zwei Ausgänge lassen sich nicht direkt verbinden.';if(a.direction==='out'||(a.direction==='bidirectional'&&b.direction==='in'))return{fromMod:am,fromPort:ap,toMod:bm,toPort:bp};return{fromMod:bm,fromPort:bp,toMod:am,toPort:ap}}
 function add(am,ap,bm,bp){const x=resolve(am,ap,bm,bp);if(typeof x==='string'){toast(x,true);return}S.connections.push({id:'c'+next++,...x});render()}
 function connected(start){if(!start)return null;const seen=new Set([start]);let changed=true;while(changed){changed=false;S.connections.forEach(c=>{if(seen.has(c.fromMod)&&!seen.has(c.toMod)){seen.add(c.toMod);changed=true}if(seen.has(c.toMod)&&!seen.has(c.fromMod)){seen.add(c.fromMod);changed=true}})}return seen}
@@ -207,6 +208,320 @@ document.addEventListener('click',e=>{
     }
 });
 
+// Optimierungsfunktionen 
+function moduleDegree(id){
+    return S.connections.reduce((n,c)=>{
+        return n+
+            (c.fromMod===id?1:0)+
+            (c.toMod===id?1:0);
+    },0);
+}
+
+function rackStateCopy(state){
+    return {
+        order:[...state.order],
+        rows:{...state.rows}
+    };
+}
+
+function buildRackPlacement(state){
+    const result=new Map();
+    const used=Array(rack_rows).fill(0);
+    const rowModules=Array.from(
+        {length:rack_rows},
+        ()=>[]
+    );
+
+    state.order.forEach(id=>{
+        const row=Math.max(
+            0,
+            Math.min(rack_rows-1,state.rows[id]??0)
+        );
+
+        const m=mod(id);
+        if(!m) return;
+
+        const start=used[row];
+
+        result.set(id,{
+            row,
+            hp:start,
+            center:start+m.hp/2
+        });
+
+        used[row]+=m.hp;
+        rowModules[row].push(id);
+    });
+
+    return {
+        modules:result,
+        used,
+        rowModules
+    };
+}
+
+// Bewertungsfunktion
+function rackCost(state){
+    const placement=buildRackPlacement(state);
+    let cost=0;
+
+    // Ungültige Zeilenbelegung wird stark bestraft
+    placement.used.forEach(used=>{
+        if(used>rack_hp){
+            cost+=(used-rack_hp)*100000;
+        }
+    });
+
+    S.modules.forEach(m=>{
+        if(m.hp>rack_hp){
+            cost+=10000000;
+        }
+    });
+
+    // Verbindungen möglichst kurz halten
+    S.connections.forEach(c=>{
+        const a=placement.modules.get(c.fromMod);
+        const b=placement.modules.get(c.toMod);
+
+        if(!a||!b){
+            cost+=10000000;
+            return;
+        }
+
+        const horizontal=Math.abs(a.center-b.center);
+        const vertical=Math.abs(a.row-b.row)*rack_hp;
+
+        cost+=horizontal+vertical;
+    });
+
+    // Leere Bereiche zwischen Modulen geringfügig vermeiden
+    placement.used.forEach(used=>{
+        cost+=used*.01;
+    });
+
+    return cost;
+}
+// Startposition erzeugen
+function initialRackState(){
+    const order=[...S.modules]
+        .sort((a,b)=>{
+            const degreeDiff=
+                moduleDegree(b.id)-moduleDegree(a.id);
+
+            return degreeDiff||b.hp-a.hp;
+        })
+        .map(m=>m.id);
+
+    const rows={};
+    const used=Array(rack_rows).fill(0);
+
+    order.forEach(id=>{
+        const m=mod(id);
+
+        let row=used.findIndex(x=>x+m.hp<=rack_hp);
+
+        if(row<0){
+            row=used.indexOf(Math.min(...used));
+        }
+
+        rows[id]=row;
+        used[row]+=m.hp;
+    });
+
+    return {order,rows};
+}
+// Die eigentliche Optimierung
+function optimizeRack(){
+    if(!S||!S.modules.length){
+        throw Error('Keine Konfiguration geladen.');
+    }
+
+    const totalHp=S.modules.reduce(
+        (sum,m)=>sum+m.hp,
+        0
+    );
+
+    if(S.modules.some(m=>m.hp<=0)){
+        throw Error(
+            'Mindestens ein Modul besitzt keine gültige HP-Breite.'
+        );
+    }
+
+    if(totalHp>rack_rows*rack_hp){
+        throw Error(
+            `Die Module benötigen ${totalHp} HP, `+
+            `verfügbar sind nur ${rack_rows*rack_hp} HP.`
+        );
+    }
+
+    let current=initialRackState();
+    let currentCost=rackCost(current);
+
+    let best=rackStateCopy(current);
+    let bestCost=currentCost;
+
+    let temperature=250;
+    const iterations=Math.max(
+        20000,
+        S.modules.length*3000
+    );
+
+    for(let i=0;i<iterations;i++){
+        const candidate=rackStateCopy(current);
+        const a=Math.floor(
+            Math.random()*candidate.order.length
+        );
+        const b=Math.floor(
+            Math.random()*candidate.order.length
+        );
+
+        if(Math.random()<.55){
+            // Reihenfolge innerhalb des Racks ändern
+            [
+                candidate.order[a],
+                candidate.order[b]
+            ]=[
+                candidate.order[b],
+                candidate.order[a]
+            ];
+        }else{
+            // Modul in eine andere Rack-Reihe verschieben
+            const id=candidate.order[a];
+            candidate.rows[id]=Math.floor(
+                Math.random()*rack_rows
+            );
+        }
+
+        const candidateCost=rackCost(candidate);
+        const delta=candidateCost-currentCost;
+        const probability=Math.exp(-delta/temperature);
+
+        if(delta<0||Math.random()<probability){
+            current=candidate;
+            currentCost=candidateCost;
+        }
+
+        if(currentCost<bestCost){
+            best=rackStateCopy(current);
+            bestCost=currentCost;
+        }
+
+        temperature*=.99965;
+
+        if(temperature<.05){
+            temperature=.05;
+        }
+    }
+
+    const placement=buildRackPlacement(best);
+
+    if(placement.used.some(x=>x>rack_hp)){
+        throw Error(
+            'Es konnte keine gültige Rack-Positionierung gefunden werden.'
+        );
+    }
+
+    return {
+        cost:bestCost,
+        placement
+    };
+}
+// Beim erfolgreichen Laden aktivieren
+$('optimize').disabled=false;
+// Button initialisieren
+$('optimize').onclick=()=>{
+    try{
+        const result=optimizeRack();
+
+        window.rackPlacement=result.placement;
+
+        toast(
+            `Rack optimiert — Kosten: `+
+            Math.round(result.cost)
+        );
+    }catch(x){
+        toast(
+            'Rack-Optimierung fehlgeschlagen: '+x.message,
+            true
+        );
+    }
+};
+// Separaten XML-Export erzeugen
+function exportRackXML(){
+    if(!window.rackPlacement){
+        throw Error(
+            'Bitte zuerst die Rack-Positionierung berechnen.'
+        );
+    }
+
+    const d=sourceDoc.cloneNode(true);
+    const root=d.documentElement;
+    const placement=window.rackPlacement;
+
+    root.setAttribute('rack_rows',String(rack_rows));
+    root.setAttribute('rack_hp',String(rack_hp));
+
+    S.modules.forEach(m=>{
+        const node=[
+            ...root.querySelectorAll('modules>module')
+        ].find(x=>x.getAttribute('id')===m.id);
+
+        const pos=placement.modules.get(m.id);
+
+        if(!node||!pos) return;
+
+        node.setAttribute('rack_row',String(pos.row+1));
+        node.setAttribute(
+            'rack_hp_start',
+            String(Math.round(pos.hp))
+        );
+        node.setAttribute(
+            'rack_hp_end',
+            String(Math.round(pos.hp+m.hp))
+        );
+    });
+
+    return new XMLSerializer()
+        .serializeToString(d);
+}  
+// Nach dem Laden aktivieren:
+$('save-rack').disabled=false;
+// Download-Funktion:
+$('save-rack').onclick=()=>{
+    try{
+        const data=exportRackXML();
+
+        const base=(
+            $('name').value.trim()||
+            'patch.xml'
+        ).replace(/\.xml$/i,'');
+
+        const filename=base+'-rack.xml';
+        const a=document.createElement('a');
+
+        a.href=URL.createObjectURL(
+            new Blob(
+                [data],
+                {type:'application/xml'}
+            )
+        );
+
+        a.download=filename;
+        a.click();
+
+        setTimeout(()=>{
+            URL.revokeObjectURL(a.href);
+        },1000);
+
+        toast('Rack-XML gespeichert.');
+    }catch(x){
+        toast(
+            'Rack-XML konnte nicht gespeichert werden: '+
+            x.message,
+            true
+        );
+    }
+};
 
 
 function render(){const c=$('canvas');c.innerHTML='';ports={};if(!S){c.innerHTML=$('empty').outerHTML;return}const rows={};S.functions.forEach(f=>(rows[f.row]??={label:f.label,ids:[]}).ids.push(f.id));Object.keys(rows).sort((a,b)=>a-b).forEach(n=>{const r=rows[n],ms=S.modules.filter(m=>r.ids.includes(m.function));if(!ms.length)return;const block=document.createElement('section');block.className='rowblock';block.innerHTML=`<div class="rowlabel">${esc(r.label).toUpperCase()}</div>`;const list=document.createElement('div');list.className='rowmods';ms.forEach(m=>{
@@ -339,6 +654,10 @@ S.modules.forEach(m=>{
     });
 });
 let con=root.querySelector('connections');if(!con){con=d.createElement('connections');root.appendChild(con)}while(con.firstChild)con.removeChild(con.firstChild);S.connections.forEach(c=>{const n=d.createElement('connection');n.setAttribute('from',c.fromMod+'.'+c.fromPort);n.setAttribute('to',c.toMod+'.'+c.toPort);con.appendChild(n)});return new XMLSerializer().serializeToString(d)}
+
+
+
+
 $('load').onclick=()=>$('file').click();$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{
 try{
 S=parse(r.result);  
