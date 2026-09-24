@@ -34,7 +34,7 @@
                     </option>                
                 </select><h2>Bedienung</h2>                
                 <p class="rail-note"><b>Ziehen</b> verbindet Ports.                     
-                    <br><b>Doppelklick / Rechtsklick</b> auf Port / Kabel löscht eine Verbindung.                     
+                    <br><b>Doppelklick / Rechtsklick</b> auf einen Port / Kabel löscht dessen Verbindung.                     
                     <br>Ein Port kann mehrere Kabel tragen.                     
                     <br>                    
                     <span style="color:var(--ok)">●                     
@@ -77,6 +77,14 @@ const full_labels = true;
 const rack_rows = 4;
 const rack_hp = 84;
 
+// Gewichtung nach Funktion
+const rack_weights={
+    connections:10, // kürzeste Verbindungen sind am wichtigsten
+    functions:6,    // gleiche Funktionen möglichst gruppieren
+    compactness:1   // Leerräume nur leicht vermeiden
+};
+
+   
 function portLabel(p) {
     return full_labels
         ? (p.name || p.abbr || p.id)
@@ -259,47 +267,131 @@ function buildRackPlacement(state){
         rowModules
     };
 }
-
-// Bewertungsfunktion
-function rackCost(state){
-    const placement=buildRackPlacement(state);
+// Gewichtung nach Funktion
+function functionGroupingCost(placement){
     let cost=0;
 
-    // Ungültige Zeilenbelegung wird stark bestraft
+    const groups=new Map();
+
+    S.modules.forEach(m=>{
+        if(!groups.has(m.function)){
+            groups.set(m.function,[]);
+        }
+
+        groups.get(m.function).push(m);
+    });
+
+    groups.forEach(modules=>{
+        if(modules.length<2) return;
+
+        const positions=modules
+            .map(m=>placement.modules.get(m.id))
+            .filter(Boolean);
+
+        for(let i=0;i<positions.length;i++){
+            for(let j=i+1;j<positions.length;j++){
+                const a=positions[i];
+                const b=positions[j];
+
+                const rowDistance=Math.abs(a.row-b.row);
+                const hpDistance=Math.abs(a.center-b.center);
+
+                // Module gleicher Funktion sollen nahe beieinander liegen
+                cost+=rowDistance*10;
+                cost+=hpDistance;
+            }
+        }
+    });
+
+    return cost;
+}
+// Bewertungsfunktion (inkl. Gewichtung nach Funktion)
+function rackCost(state){
+    if(!S){
+        throw Error('Keine Konfiguration geladen.');
+    }
+
+    const placement=buildRackPlacement(state);
+
+    let invalidCost=0;
+    let connectionCost=0;
+    let functionCost=0;
+    let compactnessCost=0;
+
     placement.used.forEach(used=>{
         if(used>rack_hp){
-            cost+=(used-rack_hp)*100000;
+            invalidCost+=(used-rack_hp)*100000;
         }
     });
 
     S.modules.forEach(m=>{
         if(m.hp>rack_hp){
-            cost+=10000000;
+            invalidCost+=10000000;
         }
     });
 
-    // Verbindungen möglichst kurz halten
     S.connections.forEach(c=>{
         const a=placement.modules.get(c.fromMod);
         const b=placement.modules.get(c.toMod);
 
         if(!a||!b){
-            cost+=10000000;
+            invalidCost+=10000000;
             return;
         }
 
         const horizontal=Math.abs(a.center-b.center);
         const vertical=Math.abs(a.row-b.row)*rack_hp;
 
-        cost+=horizontal+vertical;
+        connectionCost+=horizontal+vertical;
     });
 
-    // Leere Bereiche zwischen Modulen geringfügig vermeiden
+    functionCost=functionGroupingCost(placement);
+
     placement.used.forEach(used=>{
-        cost+=used*.01;
+        compactnessCost+=used*.01;
     });
 
-    return cost;
+    /*
+     * Normierung innerhalb der Funktion:
+     * Die Maximalwerte werden erst verwendet,
+     * nachdem S geprüft wurde.
+     */
+    const maxConnectionCost=Math.max(
+        1,
+        S.connections.length*rack_rows*rack_hp
+    );
+
+    const moduleCount=S.modules.length;
+
+    const maxFunctionCost=Math.max(
+        1,
+        moduleCount*moduleCount*rack_hp
+    );    
+
+    const maxDistance=
+        S.connections.length*
+        rack_rows*
+        rack_hp;
+    
+    const maxFunctionDistance=
+        S.modules.length*
+        S.modules.length*
+        rack_hp;
+
+    const normalizedConnections=
+        connectionCost/maxConnectionCost;
+        // const normalizedConnections=
+        //    normalizeCost(connectionCost,maxDistance);
+
+    const normalizedFunctions=
+        functionCost/maxFunctionCost;
+    // const normalizedFunctions=
+    //    normalizeCost(functionCost,maxFunctionDistance);
+
+    return invalidCost+
+        rack_weights.connections*normalizedConnections+
+        rack_weights.functions*normalizedFunctions+
+        rack_weights.compactness*compactnessCost;
 }
 // Startposition erzeugen
 function initialRackState(){
@@ -427,25 +519,34 @@ function optimizeRack(){
     };
 }
 // Beim erfolgreichen Laden aktivieren
-$('optimize').disabled=false;
+// $('optimize').disabled=false;
 // Button initialisieren
+
 $('optimize').onclick=()=>{
+    if(!S){
+        toast('Bitte zuerst eine XML-Datei laden.',true);
+        return;
+    }
+
     try{
         const result=optimizeRack();
-
         window.rackPlacement=result.placement;
 
+        $('save-rack').disabled=false;
+
         toast(
-            `Rack optimiert — Kosten: `+
+            'Rack optimiert — Kosten: '+
             Math.round(result.cost)
         );
     }catch(x){
         toast(
-            'Rack-Optimierung fehlgeschlagen: '+x.message,
+            'Fehler beim Optimieren: '+x.message,
             true
         );
     }
 };
+
+
 // Separaten XML-Export erzeugen
 function exportRackXML(){
     if(!window.rackPlacement){
@@ -485,7 +586,7 @@ function exportRackXML(){
         .serializeToString(d);
 }  
 // Nach dem Laden aktivieren:
-$('save-rack').disabled=false;
+// $('save-rack').disabled=false;
 // Download-Funktion:
 $('save-rack').onclick=()=>{
     try{
@@ -658,20 +759,106 @@ let con=root.querySelector('connections');if(!con){con=d.createElement('connecti
 
 
 
-$('load').onclick=()=>$('file').click();$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader;r.onload=()=>{
-try{
-S=parse(r.result);  
-//  Optional: Alle Module beim Laden geöffnet starten
-collapsedModules.clear();
-S.modules.forEach(m=>{
-    if(m.collapsed){
-        collapsedModules.add(m.id);
-    }
-});
-selectedModule='';selectedVoice='';$('status').textContent=`${S.title} — ${S.modules.length} Module, ${S.connections.length} Verbindungen geladen`;$('name').value=f.name.replace(/\.xml$/i,'')+'-patched.xml';$('name').disabled=$('save').disabled=false;sidebar();render()}
-catch(x){toast('Fehler beim Einlesen: '+x.message,true)}};r.readAsText(f)};
-$('save').onclick=async()=>{let n=$('name').value.trim()||'patch.xml';if(!/\.xml$/i.test(n))n+='.xml';const data=exportXML();try{if(window.claude?.use){downloadCap??=await claude.use('downloads');if(downloadCap){const r=await downloadCap.save({filename:n,data});toast(r.status==='saved'?'Gespeichert.':'Übergeben.');return}}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/xml'}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Gespeichert.')}catch(x){toast('Speichern fehlgeschlagen: '+x.message,true)}};
+$('load').onclick=()=>$('file').click();
 
+$('file').onchange=e=>{
+    const f=e.target.files[0];
+    if(!f) return;
+
+    const r=new FileReader;
+    r.onload=()=>{
+
+        try{
+            S=parse(r.result);
+
+            collapsedModules.clear();
+            S.modules.forEach(m=>{
+                if(m.collapsed){
+                    collapsedModules.add(m.id);
+                }
+            });
+
+            selectedModule='';
+            selectedVoice='';
+
+            $('status').textContent=
+                `${S.title} — ${S.modules.length} Module, ${S.connections.length} Verbindungen geladen`;
+
+            $('name').value =
+                f.name.replace(/\.xml$/i,'')+'-patched.xml';
+
+            $('name').disabled=false;
+            $('save').disabled=false;
+            $('optimize').disabled=false;
+            $('save-rack').disabled=true;
+
+            sidebar();
+            render();
+        }
+        catch(x){
+            toast('Fehler beim Einlesen: '+x.message,true);
+        }
+    };
+
+    r.readAsText(f);
+};
+
+
+
+// $('save').onclick=async()=>{let n=$('name').value.trim()||'patch.xml';if(!/\.xml$/i.test(n))n+='.xml';const data=exportXML();try{if(window.claude?.use){downloadCap??=await claude.use('downloads');if(downloadCap){const r=await downloadCap.save({filename:n,data});toast(r.status==='saved'?'Gespeichert.':'Übergeben.');return}}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'application/xml'}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);toast('Gespeichert.')}catch(x){toast('Speichern fehlgeschlagen: '+x.message,true)}};
+$('save').onclick=async()=>{
+    let n=$('name').value.trim()||'patch.xml';
+
+    if(!/\.xml$/i.test(n)){
+        n+='.xml';
+    }
+
+    const data=exportXML();
+
+    try{
+        if(window.claude?.use){
+            downloadCap??=await claude.use('downloads');
+
+            if(downloadCap){
+                const r=await downloadCap.save({
+                    filename:n,
+                    data
+                });
+
+                toast(
+                    r.status==='saved'
+                        ?'Gespeichert.'
+                        :'Übergeben.'
+                );
+
+                return;
+            }
+        }
+
+        const a=document.createElement('a');
+
+        a.href=URL.createObjectURL(
+            new Blob(
+                [data],
+                {type:'application/xml'}
+            )
+        );
+
+        a.download=n;
+        a.click();
+
+        setTimeout(()=>{
+            URL.revokeObjectURL(a.href);
+        },1000);
+
+        toast('Gespeichert.');
+    }catch(x){
+        toast(
+            'Speichern fehlgeschlagen: '+x.message,
+            true
+        );
+    }
+};
 
 
 //document.onclick=e=>{if(!e.target.closest('.more')&&!e.target.closest('.popover'))document.querySelectorAll('.popover.show').forEach(x=>x.classList.remove('show'))};
