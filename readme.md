@@ -36,7 +36,7 @@ Module werden nach Funktion gruppiert und in Reihen dargestellt. Verbindungen we
 - Modul-Header-Interaktion mit Fokus-/Dim-Logik für Nachbarschaften
 - Popover für Port-Sichtbarkeit und Einzel-Status der Ports
 - Export als XML mit frei wählbarem Dateinamen
-- Rack-Ansicht mit optimierter Reihenfolge/Verteilung der Module
+- Rack-Ansicht mit optimierter Reihenfolge/Verteilung der Module (ohne Labels, vertikales Layout)
 - Rack-Optimierung mit Bewertungsfunktion („connections“, „functions“, „compactness“)
 - Rack-spezifischer XML-Export inklusive `rack_rows`, `rack_hp`, `rack_row` und `rack_hp_start/end`
 - Dynamische Rack-Parameter (`rack_rows`, `rack_hp`) im UI und beim XML-Import/Export
@@ -48,14 +48,20 @@ Module werden nach Funktion gruppiert und in Reihen dargestellt. Verbindungen we
 3. Optionales `elementary`-Handling im XML-Schema klar definieren, falls später erforderlich
 4. Kabeldarstellung weiter verfeinern (z. B. gerade vs. gebogene Linien je nach Ansicht/Typ)
 5. Exportroutine und Dateinamenlogik abschließend gegen Edge Cases abtesten
+6. Zustandslogik beim Rack Export (Export trägt nur dann den Namen _optimized_N.xml, wenn tatsächlich eine Optimierung ausgeführt wurde)
+7. Popover-Layout in Rack-Ansicht verbreitern
+8. Modul Konfiguration im Tool ergänzen (XML lesen/schreiben)
+9. Daten API / Import für Modul Metadaten ergänzen
 
 ### Sonstige bekannte Unsicherheiten in den Moduldaten
 Die Module wurden größtenteils aus Original-Manuals, realen Referenzen oder manueller Korrektur übernommen. Die Datensätze sind für die UI-Logik ausreichend, aber nicht als vollständige Masterdatenbank für alle Eurorack-Module gedacht.
 
 ### Nächster sinnvoller Schritt
-1. UI/UX und Render-Logik auf Konsistenz validieren
-2. Rack- und XML-Workflow mit echten Beispieldateien durchlaufen
-3. Eventuelle Redundanzen in der App-Struktur bereinigen und finalisieren
+1. Zustandslogik beim Rack Export (nächste Baustellen: Punkt 6)
+2. Popover-Layout in Rack-Ansicht verbreitern (nächste Baustellen: Punkt 7)
+3. UI/UX und Render-Logik auf Konsistenz validieren
+4. Rack- und XML-Workflow mit echten Beispieldateien durchlaufen
+5. Eventuelle Redundanzen in der App-Struktur bereinigen und finalisieren
 
 ---
 
@@ -118,7 +124,7 @@ Diese Schichten werden bewusst getrennt modelliert, damit Filterung und Visualis
 Das XML-Schema ist die Grundlage der gesamten App. Relevante Bestandteile sind:
 
 ```xml
-<patch title="LIVE (small)">
+<patch title="LIVE (small)" hp="265">
   <layers>
     <layer id="audio" label="Audio" color="#6fcf97" />
     <layer id="gate" label="Gate" color="#4f9fe0" />
@@ -129,12 +135,16 @@ Das XML-Schema ist die Grundlage der gesamten App. Relevante Bestandteile sind:
   </voices>
 
   <functions>
+    <!-- row = feste Position im Diagramm-Layout; mehrere function-Ids
+         können sich eine row + label teilen (z.B. fx+process -> "Processing",
+         env+mod -> "Modulation"). function wird pro Modul referenziert,
+         die Reihe selbst ergibt sich daraus (nicht separat am Modul gespeichert). -->
     <function id="osc" row="1" label="OSC" />
     <function id="filter" row="2" label="FILTER" />
   </functions>
 
   <modules>
-    <module id="m1" name="VCO" function="osc" active="true" hp="6">
+    <module id="m1" name="VCO" function="osc" active="true" hp="6" collapsed="false" rack_hp_start="0" rack_hp_end="6">
       <ports>
         <port id="m1.out1" direction="out" layer="audio" default_active="true" />
         <port id="m1.in1" direction="in" layer="audio" default_active="true" />
@@ -154,6 +164,8 @@ Wichtige Punkte:
 - `default_active` ist der Standard-Sichtbarkeitsstatus eines Ports
 - `connections` werden nach dem Laden des Tools interaktiv ergänzt oder gelöst
 - `rack_rows` und `rack_hp` können als Attribute auf Root-Ebene gesetzt werden, um Rack-Layouts zu definieren
+- `collapsed` wird dynamisch beim Speichern gesetzt und gibt den letzten Aus- Eingeklappt Status eines Moduls wieder
+- `rack_hp_start` und `rack_hp_end` werden nach dem Rack optimieren über "Rack-XML speichern" dynamisch gesetzt
 
 ---
 
